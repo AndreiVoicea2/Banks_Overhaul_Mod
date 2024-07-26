@@ -1,0 +1,13 @@
+{
+    "ModTitle": "Banks Remastered",
+    "ModVersion": "1.1.0",
+    "ModAuthor": "Voicea Andrei",
+    "ContactInfo": "https://next.nexusmods.com/profile/ChillingInTheNuclearWinter/about-me",
+    "DFUnity_Version": "1.1.0",
+    "ModDescription": "This mod remasteres the banks.",
+    "GUID": "cb3ca502-1934-4f4e-96d0-f4d9057c05cc",
+    "Files": [
+        "Assets/Game/Mods/BanksRemastered/BanksRemastered.cs",
+        "Assets/Game/Mods/BanksRemastered/modsettings.json"
+    ]
+}

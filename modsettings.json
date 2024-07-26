@@ -1,0 +1,41 @@
+{
+    "Version": "1.00",
+    "Sections": [
+        {
+            "Name": "GeneralSettings",
+            "Description": "Related To General Settings For The Mod",
+            "IsAdvanced": false,
+            "Keys": [
+                {
+                    "Value": false,
+                    "Name": "AllowAutomaticDepositing",
+                    "Description": "Timer will be reseted automatically and the deposit bonus will be added without another deposit || Default = False",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+                },
+                {
+                    "Min": 1,
+                    "Max": 10,
+                    "Value": 5,
+                    "Name": "BonusRate",
+                    "Description": "Set the bonus rate || Default = 5%",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
+                },
+                {
+                    "Min": 1,
+                    "Max": 30,
+                    "Value": 10,
+                    "Name": "DepositDays",
+                    "Description": "Set the deposit days || Default = 10",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderIntKey"
+                }
+            ],
+            "$version": "v1"
+        }
+            
+            
+        
+    ]
+}

@@ -10,7 +10,8 @@ using DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings;
 using System;
 
 
-    public struct BankStruct
+        #region Containers
+public struct BankStruct
     {
 
         public uint BankDepositDate;
@@ -26,13 +27,12 @@ using System;
 
     }
 
+    #endregion
 
-
-    public class BanksRemastered : MonoBehaviour, IHasModSaveData
-    {
+public class BanksRemastered : MonoBehaviour, IHasModSaveData
+ {
 
         public static BanksRemastered instance;
-
 
         #region Constants
 
@@ -73,14 +73,24 @@ using System;
             mod.IsReady = true;
         }
 
+    private static void LoadSettings(ModSettings modSettings, ModSettingsChange change)
+    {
+        AutomaticDeposit = mod.GetSettings().GetValue<bool>("GeneralSettings", "AllowAutomaticDepositing");
+        BonusRate = mod.GetSettings().GetValue<float>("GeneralSettings", "BonusRate");
+        DepositDaysNumber = mod.GetSettings().GetValue<int>("GeneralSettings", "DepositDays");
 
-        #endregion
+    }
+
+
+    #endregion
 
         #region Unity Methods
-        private void Awake()
+    private void Awake()
         {
             DontDestroyOnLoad(this.gameObject);
             instance = this;
+            
+
         }
 
 
@@ -88,8 +98,9 @@ using System;
         {
             
             mod.LoadSettings();
-            DepositDaysDue = DaggerfallDateTime.MinutesPerDay * DepositDaysNumber;
 
+            DepositDaysDue = DaggerfallDateTime.MinutesPerDay * DepositDaysNumber;
+            
             if (AutomaticDeposit == true)
             {
                 DaggerfallBankManager.OnDepositGold += AUTOSetDepositTimer;
@@ -103,14 +114,6 @@ using System;
                 DaggerfallBankManager.OnDepositLOC += SetDepositTimer;
                 WorldTime.OnNewHour += RewardBonusDeposit;
             }
-        }
-
-        private static void LoadSettings(ModSettings modSettings, ModSettingsChange change)
-        {
-            AutomaticDeposit = mod.GetSettings().GetValue<bool>("GeneralSettings", "AllowAutomaticDepositing");
-            BonusRate = mod.GetSettings().GetValue<float>("GeneralSettings", "BonusRate");
-            DepositDaysNumber = mod.GetSettings().GetValue<int>("GeneralSettings", "DepositDays");
-
         }
 
         #endregion
@@ -132,7 +135,7 @@ using System;
             }
             else
             {
-                Debug.Log("Depozitarea a eșuat: " + result.ToString());
+                Debug.Log("Failed Deposit: " + result.ToString());
             }
 
         }
@@ -173,7 +176,7 @@ using System;
             }
             else
             {
-                Debug.Log("Depozitarea a eșuat: " + result.ToString());
+                Debug.Log("Failed Deposit: " + result.ToString());
             }
 
         }
@@ -185,10 +188,10 @@ using System;
             uint CurrentDate = DaggerfallUnity.Instance.WorldTime.DaggerfallDateTime.ToClassicDaggerfallTime() + ConversionTime;
             if (DaggerfallBankManager.BankAccounts[index].accountGold != 0 && CurrentDate >= bankstruct[GameManager.Instance.PlayerGPS.CurrentRegionIndex].BankDepositDate + DepositDaysDue && bankstruct[GameManager.Instance.PlayerGPS.CurrentRegionIndex].BankDepositDate != 0)
             {
-                uint DaysPassedWithDeposit = (CurrentDate - bankstruct[GameManager.Instance.PlayerGPS.CurrentRegionIndex].BankDepositDate) / DaggerfallDateTime.MinutesPerDay;
+                uint DaysPassedWithDeposit = ((CurrentDate - bankstruct[GameManager.Instance.PlayerGPS.CurrentRegionIndex].BankDepositDate)) / DaggerfallDateTime.MinutesPerDay;
                 Debug.Log(DaysPassedWithDeposit);
 
-                for (int i = 1; i <= DaysPassedWithDeposit; i++)
+                for (int i = 1; i <= DaysPassedWithDeposit/DepositDaysNumber; i++)
                     DaggerfallBankManager.BankAccounts[index].accountGold += (int)((BonusRate / 100) * DaggerfallBankManager.BankAccounts[index].accountGold);
 
                 DaggerfallUI.AddHUDText("Your Bonus Gold Has Been Added To The Bank", MessageDelay);
@@ -198,9 +201,12 @@ using System;
 
         }
 
-        #endregion
+    #endregion
 
-        public Type SaveDataType
+        #region SaveMethods
+
+    
+    public Type SaveDataType
         {
             get { return typeof(BanksRemasteredSaveData); }
         }
@@ -243,6 +249,8 @@ using System;
 
        
     }
+
+    #endregion
 
 
 

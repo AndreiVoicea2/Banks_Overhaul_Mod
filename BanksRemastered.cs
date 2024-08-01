@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using DaggerfallWorkshop.Game.Banking;
 using DaggerfallWorkshop.Game;
@@ -10,11 +8,11 @@ using DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings;
 using System;
 
 
-        #region Containers
+#region Containers
 public struct BankStruct
     {
 
-        public uint BankDepositDate;
+        public long BankDepositDate;
         public long RemainedDays;
         public bool BonusRewarded;
 
@@ -24,7 +22,7 @@ public struct BankStruct
     public class BanksRemasteredSaveData
     {
         
-        public BankStruct[] bankstruct = new BankStruct[DaggerfallUnity.Instance.ContentReader.MapFileReader.RegionCount + 1];
+        public BankStruct[] bankstruct = new BankStruct[BanksRemastered.BankStructSize];
 
     }
 
@@ -36,8 +34,8 @@ public class BanksRemastered : MonoBehaviour, IHasModSaveData
         public static BanksRemastered instance;
 
         #region Constants
-
-        private const int ConversionTime = DaggerfallDateTime.DaysPerYear * DaggerfallDateTime.MinutesPerDay;
+    
+        private const long ConversionTime = DaggerfallDateTime.DaysPerYear * DaggerfallDateTime.MinutesPerDay;
         private const float MessageDelay = 6f;
 
         #endregion
@@ -49,10 +47,12 @@ public class BanksRemastered : MonoBehaviour, IHasModSaveData
 
         public static int DepositDaysNumber { get; set; }
 
+        public static int BankStructSize = DaggerfallUnity.Instance.ContentReader.MapFileReader.RegionCount + 1;
 
-        public BankStruct[] bankstruct = new BankStruct[DaggerfallUnity.Instance.ContentReader.MapFileReader.RegionCount + 1];
 
-        private int DepositDaysDue;
+        public BankStruct[] bankstruct = new BankStruct[BankStructSize];
+
+        private long DepositDaysDue;
 
 
 
@@ -76,9 +76,16 @@ public class BanksRemastered : MonoBehaviour, IHasModSaveData
 
     private static void LoadSettings(ModSettings modSettings, ModSettingsChange change)
     {
-        AutomaticDeposit = mod.GetSettings().GetValue<bool>("GeneralSettings", "AllowAutomaticDepositing");
-        BonusRate = mod.GetSettings().GetValue<float>("GeneralSettings", "BonusRate");
-        DepositDaysNumber = mod.GetSettings().GetValue<int>("GeneralSettings", "DepositDays");
+        try
+        {
+            AutomaticDeposit = mod.GetSettings().GetValue<bool>("GeneralSettings", "AllowAutomaticDepositing");
+            BonusRate = mod.GetSettings().GetValue<float>("GeneralSettings", "BonusRate");
+            DepositDaysNumber = mod.GetSettings().GetValue<int>("GeneralSettings", "DepositDays");
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"Failed to load settings: {ex.Message}");
+        }
 
     }
 
@@ -86,16 +93,15 @@ public class BanksRemastered : MonoBehaviour, IHasModSaveData
     #endregion
 
         #region Unity Methods
-    private void Awake()
+        private void Awake()
         {
-            DontDestroyOnLoad(this.gameObject);
-            instance = this;
-            
+
+            instance = this;   
 
         }
 
 
-        void Start()
+        private void Start()
         {
             
             mod.LoadSettings();
@@ -117,7 +123,7 @@ public class BanksRemastered : MonoBehaviour, IHasModSaveData
             }
         }
 
-        void Update()
+        private void Update()
         {
 
              if (AutomaticDeposit == true)
@@ -145,10 +151,10 @@ public class BanksRemastered : MonoBehaviour, IHasModSaveData
             if (result == TransactionResult.NONE)
             {
                 int index = GameManager.Instance.PlayerGPS.CurrentRegionIndex;
-                uint date = DaggerfallUnity.Instance.WorldTime.DaggerfallDateTime.ToClassicDaggerfallTime() + ConversionTime;
+                long date = DaggerfallUnity.Instance.WorldTime.DaggerfallDateTime.ToClassicDaggerfallTime() + ConversionTime;
                 bankstruct[index].BankDepositDate = date;
                 bankstruct[index].BonusRewarded = false;
-                DaggerfallUI.AddHUDText("Bonus deposit gold in " + DepositDaysDue / DaggerfallDateTime.MinutesPerDay + " days", MessageDelay);
+                DaggerfallUI.AddHUDText("Bonus deposit gold in " + DepositDaysNumber + " days", MessageDelay);
 
 
             }
@@ -164,12 +170,12 @@ public class BanksRemastered : MonoBehaviour, IHasModSaveData
         {
 
             int index = GameManager.Instance.PlayerGPS.CurrentRegionIndex;
-            uint CurrentDate = DaggerfallUnity.Instance.WorldTime.DaggerfallDateTime.ToClassicDaggerfallTime() + ConversionTime;
-            if (DaggerfallBankManager.BankAccounts[index].accountGold != 0 && CurrentDate >= bankstruct[GameManager.Instance.PlayerGPS.CurrentRegionIndex].BankDepositDate + DepositDaysDue && bankstruct[GameManager.Instance.PlayerGPS.CurrentRegionIndex].BonusRewarded == false && bankstruct[GameManager.Instance.PlayerGPS.CurrentRegionIndex].BankDepositDate != 0)
+            long CurrentDate = DaggerfallUnity.Instance.WorldTime.DaggerfallDateTime.ToClassicDaggerfallTime() + ConversionTime;
+            if (DaggerfallBankManager.BankAccounts[index].accountGold != 0 && CurrentDate >= bankstruct[index].BankDepositDate + DepositDaysDue && bankstruct[index].BonusRewarded == false && bankstruct[index].BankDepositDate != 0)
             {
                 DaggerfallBankManager.BankAccounts[index].accountGold += (int)((BonusRate / 100) * DaggerfallBankManager.BankAccounts[index].accountGold);
                 DaggerfallUI.AddHUDText("Your Bonus Gold Has Been Added To The Bank", MessageDelay);
-                bankstruct[GameManager.Instance.PlayerGPS.CurrentRegionIndex].BonusRewarded = true;
+                bankstruct[index].BonusRewarded = true;
 
             }
 
@@ -187,9 +193,9 @@ public class BanksRemastered : MonoBehaviour, IHasModSaveData
 
                 if (bankstruct[index].BankDepositDate == 0)
                 {
-                    uint date = DaggerfallUnity.Instance.WorldTime.DaggerfallDateTime.ToClassicDaggerfallTime() + ConversionTime;
+                    long date = DaggerfallUnity.Instance.WorldTime.DaggerfallDateTime.ToClassicDaggerfallTime() + ConversionTime;
                     bankstruct[index].BankDepositDate = date;
-                    DaggerfallUI.AddHUDText("Bonus deposit gold in " + DepositDaysDue / DaggerfallDateTime.MinutesPerDay + " days", MessageDelay);
+                    DaggerfallUI.AddHUDText("Bonus deposit gold in " + DepositDaysNumber + " days", MessageDelay);
                 }
 
             }
@@ -204,21 +210,21 @@ public class BanksRemastered : MonoBehaviour, IHasModSaveData
         {
 
             int index = GameManager.Instance.PlayerGPS.CurrentRegionIndex;
-            uint CurrentDate = DaggerfallUnity.Instance.WorldTime.DaggerfallDateTime.ToClassicDaggerfallTime() + ConversionTime;
-            uint DaysPassedFromLastPayout = (uint)(((CurrentDate - bankstruct[index].BankDepositDate) + bankstruct[index].RemainedDays) / DaggerfallDateTime.MinutesPerDay);
-             long DateRewardDeposit = bankstruct[index].BankDepositDate + DepositDaysDue - bankstruct[index].RemainedDays;
+            long CurrentDate = DaggerfallUnity.Instance.WorldTime.DaggerfallDateTime.ToClassicDaggerfallTime() + ConversionTime;  
+            long DateRewardDeposit = bankstruct[index].BankDepositDate + DepositDaysDue - bankstruct[index].RemainedDays;
         if (DaggerfallBankManager.BankAccounts[index].accountGold != 0 && CurrentDate >= DateRewardDeposit && bankstruct[index].BankDepositDate != 0)
             {
-                Debug.Log(DaysPassedFromLastPayout);
 
-                for (int i = 1; i <= DaysPassedFromLastPayout / DepositDaysNumber; i++)
+            long DaysPassedFromLastPayout = ((CurrentDate - bankstruct[index].BankDepositDate) + bankstruct[index].RemainedDays);
+
+            for (int i = 1; i <= DaysPassedFromLastPayout / DepositDaysDue; i++)
                     DaggerfallBankManager.BankAccounts[index].accountGold += (int)((BonusRate / 100) * DaggerfallBankManager.BankAccounts[index].accountGold);
 
                 DaggerfallUI.AddHUDText("Your Bonus Gold Has Been Added To The Bank", MessageDelay);
                 bankstruct[index].BankDepositDate = CurrentDate;
 
-            if (DaysPassedFromLastPayout >= DepositDaysNumber)
-                bankstruct[index].RemainedDays = (DaysPassedFromLastPayout % DepositDaysNumber) * DaggerfallDateTime.MinutesPerDay;
+            if (DaysPassedFromLastPayout >= DepositDaysDue)
+                bankstruct[index].RemainedDays = (DaysPassedFromLastPayout % DepositDaysDue);
             else bankstruct[index].RemainedDays = 0;
 
             }
@@ -240,38 +246,53 @@ public class BanksRemastered : MonoBehaviour, IHasModSaveData
             return new BanksRemasteredSaveData
             {
 
-                bankstruct = new BankStruct[DaggerfallUnity.Instance.ContentReader.MapFileReader.RegionCount + 1]
+                bankstruct = new BankStruct[BankStructSize]
 
             };
         }
 
     public object GetSaveData()
     {
-        BanksRemasteredSaveData saveData = new BanksRemasteredSaveData
+        try
         {
-            bankstruct = new BankStruct[DaggerfallUnity.Instance.ContentReader.MapFileReader.RegionCount + 1]
-        };
+            BanksRemasteredSaveData saveData = new BanksRemasteredSaveData
+            {
+                bankstruct = new BankStruct[BankStructSize]
+            };
 
-        for (int i = 0; i < bankstruct.Length; i++)
-        {
-            saveData.bankstruct[i] = bankstruct[i];
+            for (int i = 0; i < bankstruct.Length; i++)
+            {
+                saveData.bankstruct[i] = bankstruct[i];
+            }
+
+            return saveData;
         }
-
-        return saveData;
+        catch (Exception ex)
+        {
+            Debug.LogError($"Error in GetSaveData: {ex.Message}");
+            return null;
+        }
     }
 
 
     public void RestoreSaveData(object saveData)
     {
-        BanksRemasteredSaveData bankSaveData = (BanksRemasteredSaveData)saveData;
-        bankstruct = new BankStruct[DaggerfallUnity.Instance.ContentReader.MapFileReader.RegionCount + 1];
-
-        for (int i = 0; i < bankSaveData.bankstruct.Length; i++)
+        try
         {
-            bankstruct[i] = bankSaveData.bankstruct[i];
+            BanksRemasteredSaveData bankSaveData = (BanksRemasteredSaveData)saveData;
+            bankstruct = new BankStruct[BankStructSize];
+
+            for (int i = 0; i < bankSaveData.bankstruct.Length; i++)
+            {
+                bankstruct[i] = bankSaveData.bankstruct[i];
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"Error in RestoreSaveData: {ex.Message}");
         }
 
-       
+
     }
 
     #endregion

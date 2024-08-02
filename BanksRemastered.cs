@@ -3,6 +3,7 @@ using DaggerfallWorkshop.Game.Banking;
 using DaggerfallWorkshop.Game;
 using DaggerfallWorkshop.Utility;
 using DaggerfallWorkshop;
+using DaggerfallWorkshop.Game.Serialization;
 using DaggerfallWorkshop.Game.Utility.ModSupport;
 using DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings;
 using System;
@@ -54,6 +55,8 @@ public class BanksRemastered : MonoBehaviour, IHasModSaveData
 
         private long DepositDaysDue;
 
+       private bool HasLoadedData = false;
+
 
 
         #endregion
@@ -96,8 +99,8 @@ public class BanksRemastered : MonoBehaviour, IHasModSaveData
         private void Awake()
         {
 
-            instance = this;   
-
+            instance = this;
+       
         }
 
 
@@ -105,37 +108,48 @@ public class BanksRemastered : MonoBehaviour, IHasModSaveData
         {
             
             mod.LoadSettings();
+             DaggerfallWorkshop.Game.Serialization.SaveLoadManager.OnStartLoad += (SaveData_v1 saveData) =>
+             {
 
-            DepositDaysDue = DaggerfallDateTime.MinutesPerDay * DepositDaysNumber;
+                 HasLoadedData = false;
+
+             };
+       
+        DepositDaysDue = DaggerfallDateTime.MinutesPerDay * DepositDaysNumber;
             
             if (AutomaticDeposit == true)
             {
                 DaggerfallBankManager.OnDepositGold += AUTOSetDepositTimer;
                 DaggerfallBankManager.OnDepositLOC += AUTOSetDepositTimer;
-                WorldTime.OnNewHour += AUTORewardBonusDeposit;
+
 
             }
             else
             {
                 DaggerfallBankManager.OnDepositGold += SetDepositTimer;
                 DaggerfallBankManager.OnDepositLOC += SetDepositTimer;
-                WorldTime.OnNewHour += RewardBonusDeposit;
+
             }
         }
 
         private void Update()
         {
 
-             if (AutomaticDeposit == true)
+             if (HasLoadedData == true)
              {
 
-                AUTORewardBonusDeposit();
+                 if (AutomaticDeposit == true)
+                 {
 
-             }
-             else
-             {
+                     AUTORewardBonusDeposit();
 
-                RewardBonusDeposit();
+                 }
+                 else
+                 {
+
+                     RewardBonusDeposit();
+
+                 }
 
              }
 
@@ -286,6 +300,8 @@ public class BanksRemastered : MonoBehaviour, IHasModSaveData
             {
                 bankstruct[i] = bankSaveData.bankstruct[i];
             }
+
+            HasLoadedData = true;
         }
         catch (Exception ex)
         {

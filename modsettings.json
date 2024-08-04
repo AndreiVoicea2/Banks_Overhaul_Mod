@@ -7,12 +7,28 @@
             "IsAdvanced": false,
             "Keys": [
                 {
-                    "Value": false,
+                    "Value": true,
                     "Name": "AllowAutomaticDepositing",
-                    "Description": "Timer will be reseted automatically and the deposit bonus will be added without another deposit || Default = False",
+                    "Description": "Timer will be reseted automatically and the deposit bonus will be added without another deposit || Default = True",
                     "$version": "v1",
                     "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
                 },
+                {
+                    "Value": true,
+                    "Name": "AllowLoanRestriction",
+                    "Description": "Restrict the number of loans taken in all the game to one until repayed || Default = True",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+                },
+                {
+                    "Min": 10000,
+                    "Max": 50000,
+                    "Value": 10000,
+                    "Name": "LoanMaxPerLevel",
+                    "Description": "(Working only with Loan Restriction) Set the loan max pay per level (formula: LoanMaxPerLevel * PlayerLevel) || Default = 10000",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderIntKey"
+                }
                 {
                     "Min": 1,
                     "Max": 10,
@@ -25,9 +41,9 @@
                 {
                     "Min": 1,
                     "Max": 30,
-                    "Value": 10,
+                    "Value": 30,
                     "Name": "DepositDays",
-                    "Description": "Set the deposit days || Default = 10",
+                    "Description": "Set the deposit days || Default = 30",
                     "$version": "v1",
                     "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderIntKey"
                 }

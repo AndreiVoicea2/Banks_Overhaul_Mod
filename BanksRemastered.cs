@@ -8,6 +8,7 @@ using DaggerfallWorkshop.Game.Utility.ModSupport;
 using DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings;
 using System;
 using DaggerfallWorkshop.Game.Formulas;
+using DaggerfallWorkshop.Game.Entity;
 
 
 #region Containers
@@ -41,12 +42,16 @@ public class BanksRemastered : MonoBehaviour, IHasModSaveData
         private const long ConversionTime = DaggerfallDateTime.DaysPerYear * DaggerfallDateTime.MinutesPerDay;
         private const float MessageDelay = 6f;
 
-        #endregion
+    #endregion
 
-        #region Variables
+    #region Variables
 
-        public static bool AutomaticDeposit { get; set; }
+        static readonly int[] loanVals = { 10000, 15000, 20000, 25000, 30000, 35000, 40000, 45000, 50000 };
+        static readonly float[] BonusRateOffsetVals = { 1f, 1.05f, 1.095f, 1.15f, 1.2f, 1.25f, 1.3f, 1.35f, 1.4f, 1.45f, 1.5f };
+    
+         public static bool AutomaticDeposit { get; set; }
         public static bool RestrictLoanOption { get; set; }
+        public static bool BonusRateWithStats { get; set; }
         private bool HasLoadedData = false;
         private bool HasLoan = false;
 
@@ -56,7 +61,9 @@ public class BanksRemastered : MonoBehaviour, IHasModSaveData
         private long DepositDaysDue;
         private int initialLoanAmount;
         public static float BonusRate { get; set; }
-        public BankStruct[] bankstruct = new BankStruct[BankStructSize];
+        public static float BonusRateOffset { get; set; }
+
+    public BankStruct[] bankstruct = new BankStruct[BankStructSize];
 
         #endregion
 
@@ -81,9 +88,12 @@ public class BanksRemastered : MonoBehaviour, IHasModSaveData
         {
             AutomaticDeposit = mod.GetSettings().GetValue<bool>("GeneralSettings", "AllowAutomaticDepositing");
             RestrictLoanOption = mod.GetSettings().GetValue<bool>("GeneralSettings", "AllowLoanRestriction");
-            LoanAmount = mod.GetSettings().GetValue<int>("GeneralSettings", "LoanMaxPerLevel");
+            LoanAmount = loanVals[mod.GetSettings().GetInt("GeneralSettings", "LoanMaxPerLevel")];
             BonusRate = mod.GetSettings().GetValue<float>("GeneralSettings", "BonusRate");
             DepositDaysNumber = mod.GetSettings().GetValue<int>("GeneralSettings", "DepositDays");
+            BonusRateWithStats = mod.GetSettings().GetValue<bool>("MiscSettings", "AllowStatsToCalculateBonusRate");
+            BonusRateOffset = BonusRateOffsetVals[mod.GetSettings().GetInt("MiscSettings", "BonusRateOffset")];
+
         }
         catch (Exception ex)
         {
@@ -224,7 +234,7 @@ public class BanksRemastered : MonoBehaviour, IHasModSaveData
             long CurrentDate = DaggerfallUnity.Instance.WorldTime.DaggerfallDateTime.ToClassicDaggerfallTime() + ConversionTime;
             if (DaggerfallBankManager.BankAccounts[index].accountGold != 0 && CurrentDate >= bankstruct[index].BankDepositDate + DepositDaysDue && bankstruct[index].BonusRewarded == false && bankstruct[index].BankDepositDate != 0)
             {
-                DaggerfallBankManager.BankAccounts[index].accountGold += (int)((BonusRate / 100) * DaggerfallBankManager.BankAccounts[index].accountGold);
+                DaggerfallBankManager.BankAccounts[index].accountGold += CalculateBonusRate(index);
                 DaggerfallUI.AddHUDText("Your Bonus Gold Has Been Added To The Bank", MessageDelay);
                 bankstruct[index].BonusRewarded = true;
 
@@ -269,7 +279,7 @@ public class BanksRemastered : MonoBehaviour, IHasModSaveData
             long DaysPassedFromLastPayout = ((CurrentDate - bankstruct[index].BankDepositDate) + bankstruct[index].RemainedDays);
 
             for (int i = 1; i <= DaysPassedFromLastPayout / DepositDaysDue; i++)
-                    DaggerfallBankManager.BankAccounts[index].accountGold += (int)((BonusRate / 100) * DaggerfallBankManager.BankAccounts[index].accountGold);
+                    DaggerfallBankManager.BankAccounts[index].accountGold += CalculateBonusRate(index);
 
                 DaggerfallUI.AddHUDText("Your Bonus Gold Has Been Added To The Bank", MessageDelay);
                 bankstruct[index].BankDepositDate = CurrentDate;
@@ -283,6 +293,20 @@ public class BanksRemastered : MonoBehaviour, IHasModSaveData
         }
 
     #endregion
+
+    private int CalculateBonusRate(int index)
+    {
+
+        if (BonusRateWithStats == false)
+            return (int)((BonusRate / 100) * DaggerfallBankManager.BankAccounts[index].accountGold);
+        else
+        {
+            PlayerEntity playerEntity = GameManager.Instance.PlayerEntity;
+            float BonusRateWithStats = BonusRate * (BonusRateOffset + ((float)(playerEntity.Stats.PermanentPersonality * playerEntity.Stats.PermanentLuck * playerEntity.Skills.GetPermanentSkillValue(DaggerfallConnect.DFCareer.Skills.Mercantile))/1000000));
+            Debug.Log(BonusRateWithStats);
+            return (int)((BonusRateWithStats / 100) * DaggerfallBankManager.BankAccounts[index].accountGold);
+        }
+    }
 
         #region SaveMethods
 

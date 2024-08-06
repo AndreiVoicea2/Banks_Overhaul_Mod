@@ -46,35 +46,22 @@ public class BanksRemastered : MonoBehaviour, IHasModSaveData
         #region Variables
 
         public static bool AutomaticDeposit { get; set; }
-
         public static bool RestrictLoanOption { get; set; }
+        private bool HasLoadedData = false;
+        private bool HasLoan = false;
 
         public static int LoanAmount { get; set; }
-    public static float BonusRate { get; set; }
-
         public static int DepositDaysNumber { get; set; }
-
-    public int PlayerReputationForLoan = 10;
-
         public static int BankStructSize = DaggerfallUnity.Instance.ContentReader.MapFileReader.RegionCount + 1;
-
-
-        public BankStruct[] bankstruct = new BankStruct[BankStructSize];
-
         private long DepositDaysDue;
-
-       private bool HasLoadedData = false;
-
-    private int initialLoanAmount;
-
-    private bool HasLoan = false;
+        private int initialLoanAmount;
+        public static float BonusRate { get; set; }
+        public BankStruct[] bankstruct = new BankStruct[BankStructSize];
 
         #endregion
 
         #region Mod Initialization
         static Mod mod;
-
-
 
         [Invoke(StateManager.StateTypes.Start, 0)]
         public static void Init(InitParams initParams)
@@ -85,7 +72,7 @@ public class BanksRemastered : MonoBehaviour, IHasModSaveData
             mod.LoadSettingsCallback = LoadSettings;
             mod.SaveDataInterface = instance;
             FormulaHelper.RegisterOverride(mod, "CalculateMaxBankLoan", (Func<int>)CalculateMaxBankLoan);
-             mod.IsReady = true;
+            mod.IsReady = true;
         }
 
     private static void LoadSettings(ModSettings modSettings, ModSettingsChange change)
@@ -111,39 +98,29 @@ public class BanksRemastered : MonoBehaviour, IHasModSaveData
         #region Unity Methods
         private void Awake()
         {
-
             instance = this;
-            
-
         }
 
 
         private void Start()
         {
-            
-            mod.LoadSettings();
+        
+             mod.LoadSettings();
+             DepositDaysDue = DaggerfallDateTime.MinutesPerDay * DepositDaysNumber;
+             initialLoanAmount = LoanAmount;
+
              DaggerfallWorkshop.Game.Serialization.SaveLoadManager.OnStartLoad += (SaveData_v1 saveData) =>
              {
-
                  HasLoadedData = false;
-                
-
              };
 
-            
-       
-            DepositDaysDue = DaggerfallDateTime.MinutesPerDay * DepositDaysNumber;
-              initialLoanAmount = LoanAmount;
-
-
-
-            if (RestrictLoanOption == true)
-            {
-
-                 DaggerfallBankManager.OnBorrowLoan += RestrictLoaning;
-                 DaggerfallBankManager.OnRepayLoan += EnableLoaning;
-
-            }
+             if (RestrictLoanOption == true)
+             {
+             
+                  DaggerfallBankManager.OnBorrowLoan += RestrictLoaning;
+                  DaggerfallBankManager.OnRepayLoan += EnableLoaning;
+             
+             }
                 
             if (AutomaticDeposit == true)
             {
@@ -192,29 +169,32 @@ public class BanksRemastered : MonoBehaviour, IHasModSaveData
 
     #endregion
 
+        #region LoanRestrictionMethods
 
-         private void RestrictLoaning(TransactionType type, TransactionResult result, int amount)
-         {
+    private void RestrictLoaning(TransactionType type, TransactionResult result, int amount)
+    {
 
-        if (result == TransactionResult.NONE)
-            HasLoan = true;        
+         if (result == TransactionResult.NONE)
+             HasLoan = true;        
 
-         }
+    }
 
-         private void EnableLoaning(TransactionType type, TransactionResult result, int amount)
-         {
+    private void EnableLoaning(TransactionType type, TransactionResult result, int amount)
+    {
 
         if (result == TransactionResult.NONE)
             HasLoan = false;
 
-         }
+    }
 
     public static int CalculateMaxBankLoan()
     {
         return GameManager.Instance.PlayerEntity.Level * LoanAmount;
     }
 
-    #region NOAUTO
+    #endregion
+
+        #region NOAUTO
 
     private void SetDepositTimer(TransactionType type, TransactionResult result, int amount)
         {
@@ -307,7 +287,7 @@ public class BanksRemastered : MonoBehaviour, IHasModSaveData
         #region SaveMethods
 
     
-    public Type SaveDataType
+        public Type SaveDataType
         {
             get { return typeof(BanksRemasteredSaveData); }
         }

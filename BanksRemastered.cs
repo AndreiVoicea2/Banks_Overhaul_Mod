@@ -192,8 +192,9 @@ public class BanksRemastered : MonoBehaviour, IHasModSaveData
     private void EnableLoaning(TransactionType type, TransactionResult result, int amount)
     {
         int index = GameManager.Instance.PlayerGPS.CurrentRegionIndex;
-        if (result == TransactionResult.NONE && DaggerfallBankManager.BankAccounts[index].loanTotal == amount)
+        if ((result == TransactionResult.NONE && DaggerfallBankManager.HasLoan(index) == false) || result == TransactionResult.OVERPAID_LOAN)
             HasLoan = false;
+       
 
     }
 

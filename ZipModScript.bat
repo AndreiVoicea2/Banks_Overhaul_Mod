@@ -40,14 +40,14 @@ if not exist "%modsDir%" mkdir "%modsDir%"
 :: Move the file to the Mods directory
 move /y "%filePath%" "%modsDir%\%fileName%"
 
-:: Delete existing zip file
+:: Delete existing zip file if it exists
 if exist "%zipFilePath%" del /q "%zipFilePath%"
 
-:: Create the zip file from the Mods directory
-powershell -command "Add-Type -A 'System.IO.Compression.FileSystem'; [IO.Compression.ZipFile]::CreateFromDirectory('%modsDir%', '%zipFilePath%')"
+:: Create the zip file including the Mods directory
+powershell -command "Compress-Archive -Path '%modsDir%' -DestinationPath '%zipFilePath%'"
 
 :: Clean up Mods directory (if desired, comment this out if you want to keep the Mods directory)
 rd /s /q "%modsDir%"
 
 endlocal
-exit /b
+exit /b 0

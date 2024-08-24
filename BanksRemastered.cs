@@ -44,7 +44,7 @@ public class BanksRemastered : MonoBehaviour, IHasModSaveData
 
     #endregion
 
-    #region Variables
+        #region Variables
 
         static readonly int[] loanVals = { 10000, 15000, 20000, 25000, 30000, 35000, 40000, 45000, 50000 };
         static readonly float[] BonusRateOffsetVals = { 1f, 1.05f, 1.095f, 1.15f, 1.2f, 1.25f, 1.3f, 1.35f, 1.4f, 1.45f, 1.5f };
@@ -235,8 +235,9 @@ public class BanksRemastered : MonoBehaviour, IHasModSaveData
             long CurrentDate = DaggerfallUnity.Instance.WorldTime.DaggerfallDateTime.ToClassicDaggerfallTime() + ConversionTime;
             if (DaggerfallBankManager.BankAccounts[index].accountGold != 0 && CurrentDate >= bankstruct[index].BankDepositDate + DepositDaysDue && bankstruct[index].BonusRewarded == false && bankstruct[index].BankDepositDate != 0)
             {
-                DaggerfallBankManager.BankAccounts[index].accountGold += CalculateBonusRate(index);
-                DaggerfallUI.AddHUDText("Your Bonus Gold Has Been Added To The Bank", MessageDelay);
+                int BonusGold = CalculateBonusRate(index);
+                DaggerfallBankManager.BankAccounts[index].accountGold += BonusGold;
+                DaggerfallUI.AddHUDText(BankDepositRewardMessage(BonusGold), MessageDelay);
                 bankstruct[index].BonusRewarded = true;
 
             }
@@ -274,16 +275,21 @@ public class BanksRemastered : MonoBehaviour, IHasModSaveData
             int index = GameManager.Instance.PlayerGPS.CurrentRegionIndex;
             long CurrentDate = DaggerfallUnity.Instance.WorldTime.DaggerfallDateTime.ToClassicDaggerfallTime() + ConversionTime;  
             long DateRewardDeposit = bankstruct[index].BankDepositDate + DepositDaysDue - bankstruct[index].RemainedDays;
-        if (DaggerfallBankManager.BankAccounts[index].accountGold != 0 && CurrentDate >= DateRewardDeposit && bankstruct[index].BankDepositDate != 0)
+        if (CurrentDate >= DateRewardDeposit && bankstruct[index].BankDepositDate != 0)
             {
 
             long DaysPassedFromLastPayout = ((CurrentDate - bankstruct[index].BankDepositDate) + bankstruct[index].RemainedDays);
+            int BonusGold = CalculateBonusRate(index);
 
             for (int i = 1; i <= DaysPassedFromLastPayout / DepositDaysDue; i++)
-                    DaggerfallBankManager.BankAccounts[index].accountGold += CalculateBonusRate(index);
+                    DaggerfallBankManager.BankAccounts[index].accountGold += BonusGold;
 
-                DaggerfallUI.AddHUDText("Your Bonus Gold Has Been Added To The Bank", MessageDelay);
-                bankstruct[index].BankDepositDate = CurrentDate;
+            if(DaggerfallBankManager.BankAccounts[index].accountGold == 0)
+                DaggerfallUI.AddHUDText("You Missed The Bonus Gold", MessageDelay);
+            else
+                DaggerfallUI.AddHUDText(BankDepositRewardMessage(BonusGold), MessageDelay);
+
+            bankstruct[index].BankDepositDate = CurrentDate;
 
             if (DaysPassedFromLastPayout >= DepositDaysDue)
                 bankstruct[index].RemainedDays = (DaysPassedFromLastPayout % DepositDaysDue);
@@ -294,6 +300,14 @@ public class BanksRemastered : MonoBehaviour, IHasModSaveData
         }
 
     #endregion
+
+    private string BankDepositRewardMessage(int amount)
+    {
+
+
+        return "Your Deposit Generated " + amount.ToString() + " Gold";
+
+    }
 
     private int CalculateBonusRate(int index)
     {

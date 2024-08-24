@@ -279,15 +279,15 @@ public class BanksRemastered : MonoBehaviour, IHasModSaveData
             {
 
             long DaysPassedFromLastPayout = ((CurrentDate - bankstruct[index].BankDepositDate) + bankstruct[index].RemainedDays);
-            int BonusGold = CalculateBonusRate(index);
+            int initialGold = DaggerfallBankManager.BankAccounts[index].accountGold;
 
             for (int i = 1; i <= DaysPassedFromLastPayout / DepositDaysDue; i++)
-                    DaggerfallBankManager.BankAccounts[index].accountGold += BonusGold;
+                    DaggerfallBankManager.BankAccounts[index].accountGold += CalculateBonusRate(index);
 
             if(DaggerfallBankManager.BankAccounts[index].accountGold == 0)
                 DaggerfallUI.AddHUDText("You Missed The Bonus Gold", MessageDelay);
             else
-                DaggerfallUI.AddHUDText(BankDepositRewardMessage(BonusGold), MessageDelay);
+                DaggerfallUI.AddHUDText(BankDepositRewardMessage(DaggerfallBankManager.BankAccounts[index].accountGold - initialGold), MessageDelay);
 
             bankstruct[index].BankDepositDate = CurrentDate;
 

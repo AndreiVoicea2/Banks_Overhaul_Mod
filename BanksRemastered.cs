@@ -21,7 +21,8 @@ public struct BankStruct
 
     }
 
-    [FullSerializer.fsObject("v1")]
+
+[FullSerializer.fsObject("v1")]
     public class BanksRemasteredSaveData
     {
         
@@ -214,15 +215,18 @@ public class BanksRemastered : MonoBehaviour, IHasModSaveData
             {
                 int index = GameManager.Instance.PlayerGPS.CurrentRegionIndex;
                 long date = DaggerfallUnity.Instance.WorldTime.DaggerfallDateTime.ToClassicDaggerfallTime() + ConversionTime;
+                 
                 bankstruct[index].BankDepositDate = date;
                 bankstruct[index].BonusRewarded = false;
-                DaggerfallUI.AddHUDText("Bonus deposit gold in " + DepositDaysNumber + " days", MessageDelay);
+
+                
+               DaggerfallUI.AddHUDText(MessageHandler(DepositDaysNumber == 1 ? MessageState.DEPOSIT_ONE_DAY : MessageState.DEPOSIT  , DepositDaysNumber), MessageDelay);
 
 
             }
             else
             {
-                Debug.Log("Failed Deposit: " + result.ToString());
+                Debug.Log(MessageHandler(MessageState.FAILED_DEPOSIT));
             }
 
         }
@@ -237,7 +241,7 @@ public class BanksRemastered : MonoBehaviour, IHasModSaveData
             {
                 int BonusGold = CalculateBonusRate(index);
                 DaggerfallBankManager.BankAccounts[index].accountGold += BonusGold;
-                DaggerfallUI.AddHUDText(BankDepositRewardMessage(BonusGold), MessageDelay);
+                DaggerfallUI.AddHUDText(MessageHandler(MessageState.REWARD, BonusGold), MessageDelay);
                 bankstruct[index].BonusRewarded = true;
 
             }
@@ -258,13 +262,15 @@ public class BanksRemastered : MonoBehaviour, IHasModSaveData
                 {
                     long date = DaggerfallUnity.Instance.WorldTime.DaggerfallDateTime.ToClassicDaggerfallTime() + ConversionTime;
                     bankstruct[index].BankDepositDate = date;
-                    DaggerfallUI.AddHUDText("Bonus deposit gold in " + DepositDaysNumber + " days", MessageDelay);
-                }
+                    DaggerfallUI.AddHUDText(MessageHandler(MessageState.DEPOSIT, DepositDaysNumber), MessageDelay);
+                 
+
+            }
 
             }
             else
             {
-                Debug.Log("Failed Deposit: " + result.ToString());
+                Debug.Log(MessageHandler(MessageState.FAILED_DEPOSIT));
             }
 
         }
@@ -285,9 +291,9 @@ public class BanksRemastered : MonoBehaviour, IHasModSaveData
                     DaggerfallBankManager.BankAccounts[index].accountGold += CalculateBonusRate(index);
 
             if(DaggerfallBankManager.BankAccounts[index].accountGold == 0)
-                DaggerfallUI.AddHUDText("You Missed The Bonus Gold", MessageDelay);
+                DaggerfallUI.AddHUDText(MessageHandler(MessageState.MISSED_DEPOSIT), MessageDelay);
             else
-                DaggerfallUI.AddHUDText(BankDepositRewardMessage(DaggerfallBankManager.BankAccounts[index].accountGold - initialGold), MessageDelay);
+                DaggerfallUI.AddHUDText(MessageHandler(MessageState.REWARD, DaggerfallBankManager.BankAccounts[index].accountGold - initialGold), MessageDelay);
 
             bankstruct[index].BankDepositDate = CurrentDate;
 
@@ -299,16 +305,6 @@ public class BanksRemastered : MonoBehaviour, IHasModSaveData
 
         }
 
-    #endregion
-
-    private string BankDepositRewardMessage(int amount)
-    {
-
-
-        return "Your Deposit Generated " + amount.ToString() + " Gold";
-
-    }
-
     private int CalculateBonusRate(int index)
     {
 
@@ -317,11 +313,68 @@ public class BanksRemastered : MonoBehaviour, IHasModSaveData
         else
         {
             PlayerEntity playerEntity = GameManager.Instance.PlayerEntity;
-            float BonusRateWithStats = BonusRate * (BonusRateOffset + ((float)(playerEntity.Stats.PermanentPersonality * playerEntity.Stats.PermanentLuck * playerEntity.Skills.GetPermanentSkillValue(DaggerfallConnect.DFCareer.Skills.Mercantile))/1000000));
+            float BonusRateWithStats = BonusRate * (BonusRateOffset + ((float)(playerEntity.Stats.PermanentPersonality * playerEntity.Stats.PermanentLuck * playerEntity.Skills.GetPermanentSkillValue(DaggerfallConnect.DFCareer.Skills.Mercantile)) / 1000000));
             Debug.Log(BonusRateWithStats);
             return (int)((BonusRateWithStats / 100) * DaggerfallBankManager.BankAccounts[index].accountGold);
         }
     }
+
+    #endregion
+
+        //Can be moved to other class
+        #region MessageHandler
+    public enum MessageState
+    {
+        DEPOSIT_ONE_DAY = 0,
+        DEPOSIT = 1,
+        REWARD = 2,
+        FAILED_DEPOSIT = 3,
+        FAILED_LOAD_SETTINGS = 4,
+        MISSED_DEPOSIT = 5,
+        GET_SAVE_ERROR = 6,
+        LOAD_SAVE_ERROR = 7
+    }
+    private string MessageHandler(MessageState MessageCode, int MessageNumber = 0)
+    {
+        switch (MessageCode)
+        {
+            case MessageState.DEPOSIT_ONE_DAY:
+                return "Bonus deposit gold in " + MessageNumber + " day";
+            break;
+
+            case MessageState.DEPOSIT:
+                return "Bonus deposit gold in " + MessageNumber + " days";
+            break;
+
+            case MessageState.REWARD:
+                return "Your Deposit Generated " + MessageNumber.ToString() + " Gold";
+            break;
+
+            case MessageState.FAILED_DEPOSIT:
+                return "Failed Deposit";
+            break;
+
+            case MessageState.FAILED_LOAD_SETTINGS:
+                return "Failed To Load Settings";
+            break;
+
+            case MessageState.MISSED_DEPOSIT:
+                return "You Missed The Bonus Gold";
+            break;
+
+            case MessageState.GET_SAVE_ERROR:
+                return "Failed To Get Saved Data";
+            break;
+
+            case MessageState.LOAD_SAVE_ERROR:
+                return "Failed To Load Saved Data";
+            break;
+
+        }
+        return "Wrong Message Code";
+    }
+
+    #endregion
 
         #region SaveMethods
 
@@ -361,7 +414,7 @@ public class BanksRemastered : MonoBehaviour, IHasModSaveData
         }
         catch (Exception ex)
         {
-            Debug.LogError($"Error in GetSaveData: {ex.Message}");
+            Debug.LogError(MessageState.GET_SAVE_ERROR);
             return null;
         }
     }
@@ -385,14 +438,13 @@ public class BanksRemastered : MonoBehaviour, IHasModSaveData
         }
         catch (Exception ex)
         {
-            Debug.LogError($"Error in RestoreSaveData: {ex.Message}");
+            Debug.LogError(MessageHandler(MessageState.LOAD_SAVE_ERROR));
         }
 
 
     }
 
     #endregion
-
 
 
 }

@@ -12,38 +12,17 @@ using DaggerfallWorkshop.Game.Entity;
 using DaggerfallConnect;
 using static DaggerfallWorkshop.Game.PlayerEnterExit;
 using DaggerfallWorkshop.Game.UserInterfaceWindows;
-using DaggerfallConnect.Arena2;
+
 
 
 #region Containers
-public enum QualityType
-    {
-
-        UNDEFINED = 0,
-        WORST = 1,
-        POOR = 2,
-        AVERAGE = 3,
-        GOOD = 4,
-        BEST = 5
-
-
-    }
-public struct BankStruct
-{
-
-    public long BankDepositDate;
-    public long RemainedDays;
-    public bool BonusRewarded;
-    public QualityType Quality;
-
-}
 
 
 [FullSerializer.fsObject("v1")]
-    public class BanksRemasteredSaveData
+    public class BanksRemasteredSaveData 
     {
         
-        public BankStruct[] bankstruct = new BankStruct[BanksRemastered.BankStructSize];
+        public BankExpanded[] bankstruct = new BankExpanded[BanksRemastered.BankStructSize];
         public bool HasLoan;
         public bool LoadedFirstTime;
 
@@ -63,7 +42,7 @@ public class BanksRemastered : MonoBehaviour, IHasModSaveData
         private const long ConversionTime = DaggerfallDateTime.DaysPerYear * DaggerfallDateTime.MinutesPerDay;
         private const float MessageDelay = 6f;
 
-    #endregion
+         #endregion
 
         #region Variables
 
@@ -84,11 +63,11 @@ public class BanksRemastered : MonoBehaviour, IHasModSaveData
         public static int BankStructSize = DaggerfallUnity.Instance.ContentReader.MapFileReader.RegionCount + 1;
         private long DepositDaysDue;
         private int initialLoanAmount;
-        private int QualityFactor = 0;
+ 
         public static float BonusRate { get; set; }
         public static float BonusRateOffset { get; set; }
 
-        public BankStruct[] bankstruct = new BankStruct[BankStructSize];
+        public BankExpanded[] bankstruct = new BankExpanded[BankStructSize];
     
         #endregion
 
@@ -187,9 +166,9 @@ public class BanksRemastered : MonoBehaviour, IHasModSaveData
 
                 if (LoadedFirstTime == false)
                 {
-
-                     for (int i = 0; i < BankStructSize; i++)
-                         bankstruct[i].Quality = (QualityType)UnityEngine.Random.Range(1, 6);
+      
+                    for (int i = 0; i < BankStructSize; i++)             
+                        bankstruct[i] = new BankExpanded();
                          LoadedFirstTime = true;
 
                 }
@@ -253,48 +232,8 @@ public class BanksRemastered : MonoBehaviour, IHasModSaveData
         {
 
             DaggerfallMessageBox mb = null;
-            string BankMessage = "UNDEFINED";
             int index = GameManager.Instance.PlayerGPS.CurrentRegionIndex;
-
-            switch (bankstruct[index].Quality)
-            {
-
-                case QualityType.WORST:
-
-                    BankMessage = "The walls are faded, and a few shelves with records look like they might collapse at any moment. The clerks seem bored, performing their tasks mechanically without much attention. One leans against the counter while another wears down his quill on a scrap of paper. An old guard dozes off in a corner.";
-                    QualityFactor = -2;
-                break;
-
-                case QualityType.POOR:
-                    BankMessage = "The bank has a cold atmosphere, with old but still sturdy furniture. The clerks work without haste, double-checking documents before approving transactions. A young, somewhat inattentive guard scans the room but seems more concerned about his night shift than security.";
-                    QualityFactor = -1;
-
-                    break;
-
-                case QualityType.AVERAGE:
-
-                    BankMessage = "The interior is simple but well-organized. The furniture is clean, without unnecessary decorations. The clerks work efficiently but don’t seem interested in small talk. A guard patrols with an air of routine, while a discreet metal door leads to a storage area.";
-                    QualityFactor = 0;
-
-                    break;
-
-                case QualityType.GOOD:
-
-                    BankMessage = "The floor is spotless, and the furniture looks new, though without any extravagance. The clerks serve customers quickly and efficiently, without excessive formalities. A well-equipped guard stands near the entrance, while the bank’s vault is visibly secured behind a metal grate.";
-                    QualityFactor = 1;
-                    break;
-
-                case QualityType.BEST:
-
-                    BankMessage = "The room is well-lit, and documents are meticulously organized. The clerks are quick and respectful, wasting no time on unnecessary pleasantries. The guards are well-equipped and switch shifts with precision. A heavy door reinforced with metal bars protects the bank’s vault.";
-                    QualityFactor = 2;
-                break;
-
-
-
-            }
-
-           mb = DaggerfallUI.MessageBox(BankMessage, true);
+            mb = DaggerfallUI.MessageBox(bankstruct[index].PrintBankQualityMessage(), true);
         }
     }
 
@@ -310,8 +249,8 @@ public class BanksRemastered : MonoBehaviour, IHasModSaveData
                 int index = GameManager.Instance.PlayerGPS.CurrentRegionIndex;
                 long date = DaggerfallUnity.Instance.WorldTime.DaggerfallDateTime.ToClassicDaggerfallTime() + ConversionTime;
                  
-                bankstruct[index].BankDepositDate = date;
-                bankstruct[index].BonusRewarded = false;
+                bankstruct[index].SetBankDepositDate(date);
+                bankstruct[index].SetBonusRewarded(false);
 
                 
                DaggerfallUI.AddHUDText(MessageHandler(DepositDaysNumber == 1 ? MessageState.DEPOSIT_ONE_DAY : MessageState.DEPOSIT  , DepositDaysNumber), MessageDelay);
@@ -331,12 +270,12 @@ public class BanksRemastered : MonoBehaviour, IHasModSaveData
 
             int index = GameManager.Instance.PlayerGPS.CurrentRegionIndex;
             long CurrentDate = DaggerfallUnity.Instance.WorldTime.DaggerfallDateTime.ToClassicDaggerfallTime() + ConversionTime;
-            if (DaggerfallBankManager.BankAccounts[index].accountGold != 0 && CurrentDate >= bankstruct[index].BankDepositDate + DepositDaysDue && bankstruct[index].BonusRewarded == false && bankstruct[index].BankDepositDate != 0)
+            if (DaggerfallBankManager.BankAccounts[index].accountGold != 0 && CurrentDate >= bankstruct[index].GetBankDepositDate() + DepositDaysDue && bankstruct[index].IsBonusRewarded() == false && bankstruct[index].GetBankDepositDate() != 0)
             {
                 int BonusGold = CalculateBonusRate(index);
                 DaggerfallBankManager.BankAccounts[index].accountGold += BonusGold;
                 DaggerfallUI.AddHUDText(MessageHandler(MessageState.REWARD, BonusGold), MessageDelay);
-                bankstruct[index].BonusRewarded = true;
+                bankstruct[index].SetBonusRewarded(true);
 
             }
 
@@ -352,10 +291,10 @@ public class BanksRemastered : MonoBehaviour, IHasModSaveData
             {
                 int index = GameManager.Instance.PlayerGPS.CurrentRegionIndex;
 
-                if (bankstruct[index].BankDepositDate == 0)
+                if (bankstruct[index].GetBankDepositDate() == 0)
                 {
                     long date = DaggerfallUnity.Instance.WorldTime.DaggerfallDateTime.ToClassicDaggerfallTime() + ConversionTime;
-                    bankstruct[index].BankDepositDate = date;
+                    bankstruct[index].SetBankDepositDate(date);
                     DaggerfallUI.AddHUDText(MessageHandler(MessageState.DEPOSIT, DepositDaysNumber), MessageDelay);
                  
 
@@ -374,11 +313,11 @@ public class BanksRemastered : MonoBehaviour, IHasModSaveData
 
             int index = GameManager.Instance.PlayerGPS.CurrentRegionIndex;
             long CurrentDate = DaggerfallUnity.Instance.WorldTime.DaggerfallDateTime.ToClassicDaggerfallTime() + ConversionTime;  
-            long DateRewardDeposit = bankstruct[index].BankDepositDate + DepositDaysDue - bankstruct[index].RemainedDays;
-        if (CurrentDate >= DateRewardDeposit && bankstruct[index].BankDepositDate != 0)
+            long DateRewardDeposit = bankstruct[index].GetBankDepositDate() + DepositDaysDue - bankstruct[index].GetRemainedDays();
+        if (CurrentDate >= DateRewardDeposit && bankstruct[index].GetBankDepositDate() != 0)
             {
 
-            long DaysPassedFromLastPayout = ((CurrentDate - bankstruct[index].BankDepositDate) + bankstruct[index].RemainedDays);
+            long DaysPassedFromLastPayout = ((CurrentDate - bankstruct[index].GetBankDepositDate()) + bankstruct[index].GetRemainedDays());
             int initialGold = DaggerfallBankManager.BankAccounts[index].accountGold;
 
             for (int i = 1; i <= DaysPassedFromLastPayout / DepositDaysDue; i++)
@@ -389,11 +328,11 @@ public class BanksRemastered : MonoBehaviour, IHasModSaveData
             else
                 DaggerfallUI.AddHUDText(MessageHandler(MessageState.REWARD, DaggerfallBankManager.BankAccounts[index].accountGold - initialGold), MessageDelay);
 
-            bankstruct[index].BankDepositDate = CurrentDate;
+            bankstruct[index].SetBankDepositDate(CurrentDate);
 
             if (DaysPassedFromLastPayout >= DepositDaysDue)
-                bankstruct[index].RemainedDays = (DaysPassedFromLastPayout % DepositDaysDue);
-            else bankstruct[index].RemainedDays = 0;
+                bankstruct[index].SetRemainedDays((DaysPassedFromLastPayout % DepositDaysDue));
+            else bankstruct[index].SetBankDepositDate(0);
 
             }
 
@@ -401,9 +340,10 @@ public class BanksRemastered : MonoBehaviour, IHasModSaveData
 
     private int CalculateBonusRate(int index)
     {
-        float bonusRate = BonusRate;
-        if (BonusRate + QualityFactor >= 1)
-            bonusRate += QualityFactor;
+        float bonusRate = 0;
+        if (BankQuality == true)
+            bonusRate = bankstruct[index].GetbonusRate();
+        else bonusRate = BonusRate;
             
 
             
@@ -421,7 +361,7 @@ public class BanksRemastered : MonoBehaviour, IHasModSaveData
 
     #endregion
 
-        //Can be moved to other class
+       
         #region MessageHandler
     public enum MessageState
     {
@@ -488,7 +428,7 @@ public class BanksRemastered : MonoBehaviour, IHasModSaveData
     {
         BanksRemasteredSaveData saveData = new BanksRemasteredSaveData
         {
-            bankstruct = new BankStruct[BankStructSize],
+            bankstruct = new BankExpanded[BankStructSize],
             HasLoan = false,
             LoadedFirstTime = false
             
@@ -504,7 +444,7 @@ public class BanksRemastered : MonoBehaviour, IHasModSaveData
         {
             BanksRemasteredSaveData saveData = new BanksRemasteredSaveData
             {
-                bankstruct = new BankStruct[BankStructSize]
+                bankstruct = new BankExpanded[BankStructSize]
             };
 
             for (int i = 0; i < bankstruct.Length; i++)
@@ -530,11 +470,12 @@ public class BanksRemastered : MonoBehaviour, IHasModSaveData
         try
         {
             BanksRemasteredSaveData bankSaveData = (BanksRemasteredSaveData)saveData;
-            bankstruct = new BankStruct[BankStructSize];
+            bankstruct = new BankExpanded[BankStructSize];
 
             for (int i = 0; i < bankSaveData.bankstruct.Length; i++)
             {
                 bankstruct[i] = bankSaveData.bankstruct[i];
+
             }
 
             HasLoan = bankSaveData.HasLoan;

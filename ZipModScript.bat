@@ -7,11 +7,11 @@ set "scriptDirInterkarmaLinux=C:\Users\Admin\Downloads\daggerfall-unity-1.1.1\da
 set "scriptDirInterkarmaOsx=C:\Users\Admin\Downloads\daggerfall-unity-1.1.1\daggerfall-unity-1.1.1\StandaloneOSX"
 set "scriptDirVwing=C:\Users\Admin\Downloads\daggerfall-unity-android-android\daggerfall-unity-android-android\Android"
 
-set "fileName=banks remaked.dfmod"
-set "zipFileNameWindows=banks_remakedWIN.zip"
-set "zipFileNameLinux=banks_remakedLINUX.zip"
-set "zipFileNameOSX=banks_remakedOSX.zip"
-set "zipFileNameAndroid=banks_remakedANDROID.zip"
+set "fileName=banks overhaul.dfmod"
+set "zipFileNameWindows=banks_overhaulWIN.zip"
+set "zipFileNameLinux=banks_overhaulLINUX.zip"
+set "zipFileNameOSX=banks_overhaulOSX.zip"
+set "zipFileNameAndroid=banks_overhaulANDROID.zip"
 
 :: Call the function for each platform
 call :ProcessFiles "%scriptDirInterkarmaWindows%" "%fileName%" "%zipFileNameWindows%"

@@ -12,7 +12,8 @@ using DaggerfallWorkshop.Game.Entity;
 using DaggerfallConnect;
 using static DaggerfallWorkshop.Game.PlayerEnterExit;
 using DaggerfallWorkshop.Game.UserInterfaceWindows;
-
+using static BankMessageHandler;
+using UnityEngine.Profiling;
 
 
 #region Containers
@@ -68,6 +69,7 @@ public class BanksRemastered : MonoBehaviour, IHasModSaveData
         public static float BonusRateOffset { get; set; }
 
         public BankExpanded[] bankstruct = new BankExpanded[BankStructSize];
+  
     
         #endregion
 
@@ -102,7 +104,8 @@ public class BanksRemastered : MonoBehaviour, IHasModSaveData
         }
         catch (Exception ex)
         {
-            Debug.LogError($"Failed to load settings: {ex.Message}");
+           
+            Debug.LogError(GeneralMessageHandler(MessageState.FAILED_LOAD_SETTINGS));
         }
 
     }
@@ -233,7 +236,7 @@ public class BanksRemastered : MonoBehaviour, IHasModSaveData
 
             DaggerfallMessageBox mb = null;
             int index = GameManager.Instance.PlayerGPS.CurrentRegionIndex;
-            mb = DaggerfallUI.MessageBox(bankstruct[index].PrintBankQualityMessage(), true);
+            mb = DaggerfallUI.MessageBox(PrintBankQualityMessage(bankstruct[index].GetQualityType()), true);
         }
     }
 
@@ -243,7 +246,7 @@ public class BanksRemastered : MonoBehaviour, IHasModSaveData
 
     private void SetDepositTimer(TransactionType type, TransactionResult result, int amount)
         {
-
+        
             if (result == TransactionResult.NONE)
             {
                 int index = GameManager.Instance.PlayerGPS.CurrentRegionIndex;
@@ -253,15 +256,16 @@ public class BanksRemastered : MonoBehaviour, IHasModSaveData
                 bankstruct[index].SetBonusRewarded(false);
 
                 
-               DaggerfallUI.AddHUDText(MessageHandler(DepositDaysNumber == 1 ? MessageState.DEPOSIT_ONE_DAY : MessageState.DEPOSIT  , DepositDaysNumber), MessageDelay);
+               DaggerfallUI.AddHUDText(GeneralMessageHandler(DepositDaysNumber == 1 ? MessageState.DEPOSIT_ONE_DAY : MessageState.DEPOSIT  , DepositDaysNumber), MessageDelay);
 
 
             }
             else
             {
-                Debug.Log(MessageHandler(MessageState.FAILED_DEPOSIT));
+                Debug.Log(GeneralMessageHandler(MessageState.FAILED_DEPOSIT));
             }
 
+        
         }
 
 
@@ -274,7 +278,7 @@ public class BanksRemastered : MonoBehaviour, IHasModSaveData
             {
                 int BonusGold = CalculateBonusRate(index);
                 DaggerfallBankManager.BankAccounts[index].accountGold += BonusGold;
-                DaggerfallUI.AddHUDText(MessageHandler(MessageState.REWARD, BonusGold), MessageDelay);
+                DaggerfallUI.AddHUDText(GeneralMessageHandler(MessageState.REWARD, BonusGold), MessageDelay);
                 bankstruct[index].SetBonusRewarded(true);
 
             }
@@ -286,8 +290,8 @@ public class BanksRemastered : MonoBehaviour, IHasModSaveData
         #region AUTO
         private void AUTOSetDepositTimer(TransactionType type, TransactionResult result, int amount)
         {
-
-            if (result == TransactionResult.NONE)
+        
+        if (result == TransactionResult.NONE)
             {
                 int index = GameManager.Instance.PlayerGPS.CurrentRegionIndex;
 
@@ -295,7 +299,7 @@ public class BanksRemastered : MonoBehaviour, IHasModSaveData
                 {
                     long date = DaggerfallUnity.Instance.WorldTime.DaggerfallDateTime.ToClassicDaggerfallTime() + ConversionTime;
                     bankstruct[index].SetBankDepositDate(date);
-                    DaggerfallUI.AddHUDText(MessageHandler(MessageState.DEPOSIT, DepositDaysNumber), MessageDelay);
+                    DaggerfallUI.AddHUDText(GeneralMessageHandler(MessageState.DEPOSIT, DepositDaysNumber), MessageDelay);
                  
 
                  }
@@ -303,20 +307,20 @@ public class BanksRemastered : MonoBehaviour, IHasModSaveData
             }
             else
             {
-                Debug.Log(MessageHandler(MessageState.FAILED_DEPOSIT));
+                Debug.Log(GeneralMessageHandler(MessageState.FAILED_DEPOSIT));
             }
-
+        
         }
 
         private void AUTORewardBonusDeposit()
         {
-
-            int index = GameManager.Instance.PlayerGPS.CurrentRegionIndex;
+        
+        int index = GameManager.Instance.PlayerGPS.CurrentRegionIndex;
             long CurrentDate = DaggerfallUnity.Instance.WorldTime.DaggerfallDateTime.ToClassicDaggerfallTime() + ConversionTime;  
             long DateRewardDeposit = bankstruct[index].GetBankDepositDate() + DepositDaysDue - bankstruct[index].GetRemainedDays();
         if (CurrentDate >= DateRewardDeposit && bankstruct[index].GetBankDepositDate() != 0)
             {
-
+           
             long DaysPassedFromLastPayout = ((CurrentDate - bankstruct[index].GetBankDepositDate()) + bankstruct[index].GetRemainedDays());
             int initialGold = DaggerfallBankManager.BankAccounts[index].accountGold;
 
@@ -324,28 +328,26 @@ public class BanksRemastered : MonoBehaviour, IHasModSaveData
                     DaggerfallBankManager.BankAccounts[index].accountGold += CalculateBonusRate(index);
 
             if(DaggerfallBankManager.BankAccounts[index].accountGold == 0)
-                DaggerfallUI.AddHUDText(MessageHandler(MessageState.MISSED_DEPOSIT), MessageDelay);
+                DaggerfallUI.AddHUDText(GeneralMessageHandler(MessageState.MISSED_DEPOSIT), MessageDelay);
             else
-                DaggerfallUI.AddHUDText(MessageHandler(MessageState.REWARD, DaggerfallBankManager.BankAccounts[index].accountGold - initialGold), MessageDelay);
+                DaggerfallUI.AddHUDText(GeneralMessageHandler(MessageState.REWARD, DaggerfallBankManager.BankAccounts[index].accountGold - initialGold), MessageDelay);
 
             bankstruct[index].SetBankDepositDate(CurrentDate);
 
             if (DaysPassedFromLastPayout >= DepositDaysDue)
                 bankstruct[index].SetRemainedDays((DaysPassedFromLastPayout % DepositDaysDue));
             else bankstruct[index].SetBankDepositDate(0);
-
-            }
+            
+         }
 
         }
 
     private int CalculateBonusRate(int index)
     {
-        float bonusRate = 0;
+        float bonusRate = BonusRate;
         if (BankQuality == true)
             bonusRate = bankstruct[index].GetbonusRate();
-        else bonusRate = BonusRate;
-            
-
+        
             
         
         if (BonusRateWithStats == false)
@@ -354,7 +356,6 @@ public class BanksRemastered : MonoBehaviour, IHasModSaveData
         {
             PlayerEntity playerEntity = GameManager.Instance.PlayerEntity;
             float BonusRateWithStats = bonusRate * (BonusRateOffset + ((float)(playerEntity.Stats.PermanentPersonality * playerEntity.Stats.PermanentLuck * playerEntity.Skills.GetPermanentSkillValue(DaggerfallConnect.DFCareer.Skills.Mercantile)) / 1000000));
-            Debug.Log(BonusRateWithStats);
             return (int)((BonusRateWithStats / 100) * DaggerfallBankManager.BankAccounts[index].accountGold);
         }
     }
@@ -362,60 +363,6 @@ public class BanksRemastered : MonoBehaviour, IHasModSaveData
     #endregion
 
        
-        #region MessageHandler
-    public enum MessageState
-    {
-        DEPOSIT_ONE_DAY = 0,
-        DEPOSIT = 1,
-        REWARD = 2,
-        FAILED_DEPOSIT = 3,
-        FAILED_LOAD_SETTINGS = 4,
-        MISSED_DEPOSIT = 5,
-        GET_SAVE_ERROR = 6,
-        LOAD_SAVE_ERROR = 7
-    }
-    private string MessageHandler(MessageState MessageCode, int MessageNumber = 0)
-    {
-        switch (MessageCode)
-        {
-            case MessageState.DEPOSIT_ONE_DAY:
-                return "Bonus deposit gold in " + MessageNumber + " day";
-            break;
-
-            case MessageState.DEPOSIT:
-                return "Bonus deposit gold in " + MessageNumber + " days";
-            break;
-
-            case MessageState.REWARD:
-                return "Your Deposit Generated " + MessageNumber.ToString() + " Gold";
-            break;
-
-            case MessageState.FAILED_DEPOSIT:
-                return "Failed Deposit";
-            break;
-
-            case MessageState.FAILED_LOAD_SETTINGS:
-                return "Failed To Load Settings";
-            break;
-
-            case MessageState.MISSED_DEPOSIT:
-                return "You Missed The Bonus Gold";
-            break;
-
-            case MessageState.GET_SAVE_ERROR:
-                return "Failed To Get Saved Data";
-            break;
-
-            case MessageState.LOAD_SAVE_ERROR:
-                return "Failed To Load Saved Data";
-            break;
-
-        }
-        return "Wrong Message Code";
-    }
-
-    #endregion
-
         #region SaveMethods
 
     
@@ -484,7 +431,7 @@ public class BanksRemastered : MonoBehaviour, IHasModSaveData
         }
         catch (Exception ex)
         {
-            Debug.LogError(MessageHandler(MessageState.LOAD_SAVE_ERROR));
+            Debug.LogError(GeneralMessageHandler(MessageState.LOAD_SAVE_ERROR));
         }
 
 

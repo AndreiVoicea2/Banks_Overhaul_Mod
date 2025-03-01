@@ -1,6 +1,6 @@
 {
     "ModTitle": "Banks Overhaul",
-    "ModVersion": "1.5.0",
+    "ModVersion": "1.5.1",
     "ModAuthor": "Voicea Andrei",
     "ContactInfo": "https://next.nexusmods.com/profile/Voxxia",
     "DFUnity_Version": "1.1.0",
@@ -9,7 +9,8 @@
     "Files": [
         "Assets/Game/Mods/BanksRemaked/modsettings.json",
         "Assets/Game/Mods/BanksRemaked/BanksRemastered.cs",
-        "Assets/Game/Mods/BanksRemaked/BankExpanded.cs"
+        "Assets/Game/Mods/BanksRemaked/BankExpanded.cs",
+        "Assets/Game/Mods/BanksRemaked/BankMessageHandler.cs"
     ],
     "Dependencies": [
         {

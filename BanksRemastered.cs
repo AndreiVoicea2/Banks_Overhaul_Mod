@@ -13,7 +13,9 @@ using DaggerfallConnect;
 using static DaggerfallWorkshop.Game.PlayerEnterExit;
 using DaggerfallWorkshop.Game.UserInterfaceWindows;
 using static BankMessageHandler;
-using UnityEngine.Profiling;
+using static UnityEngine.Rendering.PostProcessing.SubpixelMorphologicalAntialiasing;
+
+
 
 
 #region Containers
@@ -53,11 +55,12 @@ public class BanksRemastered : MonoBehaviour, IHasModSaveData
          public static bool AutomaticDeposit { get; set; }
         public static bool RestrictLoanOption { get; set; }
         public static bool BonusRateWithStats { get; set; }
-
+ 
         public static bool BankQuality { get; set; }
         private bool HasLoadedData = false;
         private bool HasLoan = false;
         private bool LoadedFirstTime = false;
+        private bool LoadedEventsFirstTime = false;
 
         public static int LoanAmount { get; set; }
         public static int DepositDaysNumber { get; set; }
@@ -82,25 +85,107 @@ public class BanksRemastered : MonoBehaviour, IHasModSaveData
             mod = initParams.Mod;
             var go = new GameObject(mod.Title);
             go.AddComponent<BanksRemastered>();
-            mod.LoadSettingsCallback = LoadSettings;
             mod.SaveDataInterface = instance;
             FormulaHelper.RegisterOverride(mod, "CalculateMaxBankLoan", (Func<int>)CalculateMaxBankLoan);
             mod.IsReady = true;
         }
 
-    private static void LoadSettings(ModSettings modSettings, ModSettingsChange change)
+    private void LoadSettings(ModSettings modSettings, ModSettingsChange change)
     {
         try
         {
-            AutomaticDeposit = mod.GetSettings().GetValue<bool>("GeneralSettings", "AllowAutomaticDepositing");
-            RestrictLoanOption = mod.GetSettings().GetValue<bool>("GeneralSettings", "AllowLoanRestriction");
-            LoanAmount = loanVals[mod.GetSettings().GetInt("GeneralSettings", "LoanMaxPerLevel")];
-            BonusRate = mod.GetSettings().GetValue<float>("GeneralSettings", "BonusRate");
-            DepositDaysNumber = mod.GetSettings().GetValue<int>("GeneralSettings", "DepositDays");
-            BankQuality = mod.GetSettings().GetValue<bool>("GeneralSettings", "AllowBankQuality");
-            BonusRateWithStats = mod.GetSettings().GetValue<bool>("MiscSettings", "AllowStatsToCalculateBonusRate");
-            BonusRateOffset = BonusRateOffsetVals[mod.GetSettings().GetInt("MiscSettings", "BonusRateOffset")];
 
+            if (change.HasChanged("GeneralSettings"))
+            {
+                bool PreviousAutomaticDepositSetting = AutomaticDeposit;
+                bool PreviousRestrictLoanOption = RestrictLoanOption;
+                bool PreviousBankQuality = BankQuality;
+
+                AutomaticDeposit = mod.GetSettings().GetValue<bool>("GeneralSettings", "AllowAutomaticDepositing");
+                RestrictLoanOption = mod.GetSettings().GetValue<bool>("GeneralSettings", "AllowLoanRestriction");
+                LoanAmount = loanVals[mod.GetSettings().GetInt("GeneralSettings", "LoanMaxPerLevel")];
+                BonusRate = mod.GetSettings().GetValue<float>("GeneralSettings", "BonusRate");
+                DepositDaysNumber = mod.GetSettings().GetValue<int>("GeneralSettings", "DepositDays");
+                BankQuality = mod.GetSettings().GetValue<bool>("GeneralSettings", "AllowBankQuality");
+                DepositDaysDue = DaggerfallDateTime.MinutesPerDay * DepositDaysNumber;
+                initialLoanAmount = LoanAmount;
+
+                if (AutomaticDeposit != PreviousAutomaticDepositSetting || LoadedEventsFirstTime == false)
+                {
+
+                    if (AutomaticDeposit == true)
+                    {
+                        if (LoadedEventsFirstTime == true)
+                        {
+                            DaggerfallBankManager.OnDepositGold -= SetDepositTimer;
+                            DaggerfallBankManager.OnDepositLOC -= SetDepositTimer;
+                        }
+
+                        DaggerfallBankManager.OnDepositGold += AUTOSetDepositTimer;
+                        DaggerfallBankManager.OnDepositLOC += AUTOSetDepositTimer;
+
+
+                    }
+                    else
+                    {
+                        if (LoadedEventsFirstTime == true)
+                        {
+                            DaggerfallBankManager.OnDepositGold -= AUTOSetDepositTimer;
+                            DaggerfallBankManager.OnDepositLOC -= AUTOSetDepositTimer;
+                        }
+
+
+                        DaggerfallBankManager.OnDepositGold += SetDepositTimer;
+                        DaggerfallBankManager.OnDepositLOC += SetDepositTimer;
+
+
+                    }
+                }
+
+
+                if (RestrictLoanOption != PreviousRestrictLoanOption || LoadedEventsFirstTime == false) 
+                {
+
+                    if (RestrictLoanOption == true)
+                    {
+                        DaggerfallBankManager.OnBorrowLoan += RestrictLoaning;
+                        DaggerfallBankManager.OnRepayLoan += EnableLoaning;
+
+                    }
+                    else
+                    {
+                        if (LoadedEventsFirstTime == true)
+                        {
+                            DaggerfallBankManager.OnBorrowLoan -= RestrictLoaning;
+                            DaggerfallBankManager.OnRepayLoan -= EnableLoaning;
+                        }
+
+                    }
+
+                }
+
+                if (BankQuality != PreviousBankQuality || LoadedEventsFirstTime == false)
+                {
+
+                    if (BankQuality == true)
+                        OnTransitionInterior += HandleTransitionToInterior;
+                    else
+                    {
+                        if(LoadedEventsFirstTime == true)
+                        OnTransitionInterior -= HandleTransitionToInterior;
+                    }
+                }
+
+                LoadedEventsFirstTime = true;
+            }
+
+            if (change.HasChanged("MiscSettings"))
+            {
+                BonusRateWithStats = mod.GetSettings().GetValue<bool>("MiscSettings", "AllowStatsToCalculateBonusRate");
+                BonusRateOffset = BonusRateOffsetVals[mod.GetSettings().GetInt("MiscSettings", "BonusRateOffset")];
+            }
+
+            
         }
         catch (Exception ex)
         {
@@ -123,41 +208,16 @@ public class BanksRemastered : MonoBehaviour, IHasModSaveData
 
         private void Start()
         {
-        
-             mod.LoadSettings();
-             DepositDaysDue = DaggerfallDateTime.MinutesPerDay * DepositDaysNumber;
-             initialLoanAmount = LoanAmount;
+              mod.LoadSettingsCallback = LoadSettings;
+              mod.LoadSettings();
+            
+             
 
              DaggerfallWorkshop.Game.Serialization.SaveLoadManager.OnStartLoad += (SaveData_v1 saveData) =>
              {
                  HasLoadedData = false;
              };
-
-          if(BankQuality == true)
-            OnTransitionInterior += HandleTransitionToInterior;
-
-        
-
-        if (RestrictLoanOption == true)
-             {
-             
-                  DaggerfallBankManager.OnBorrowLoan += RestrictLoaning;
-                  DaggerfallBankManager.OnRepayLoan += EnableLoaning;
-             
-             }
                 
-            if (AutomaticDeposit == true)
-            {
-                DaggerfallBankManager.OnDepositGold += AUTOSetDepositTimer;
-                DaggerfallBankManager.OnDepositLOC += AUTOSetDepositTimer;
-
-            }
-            else
-            {
-                DaggerfallBankManager.OnDepositGold += SetDepositTimer;
-                DaggerfallBankManager.OnDepositLOC += SetDepositTimer;
-
-            }
         }
 
         private void Update()
@@ -299,10 +359,10 @@ public class BanksRemastered : MonoBehaviour, IHasModSaveData
                 {
                     long date = DaggerfallUnity.Instance.WorldTime.DaggerfallDateTime.ToClassicDaggerfallTime() + ConversionTime;
                     bankstruct[index].SetBankDepositDate(date);
-                    DaggerfallUI.AddHUDText(GeneralMessageHandler(MessageState.DEPOSIT, DepositDaysNumber), MessageDelay);
-                 
+                     DaggerfallUI.AddHUDText(GeneralMessageHandler(DepositDaysNumber == 1 ? MessageState.DEPOSIT_ONE_DAY : MessageState.DEPOSIT, DepositDaysNumber), MessageDelay);
 
-                 }
+
+                  }
 
             }
             else
@@ -346,10 +406,12 @@ public class BanksRemastered : MonoBehaviour, IHasModSaveData
     {
         float bonusRate = BonusRate;
         if (BankQuality == true)
-            bonusRate = bankstruct[index].GetbonusRate();
-        
-            
-        
+        {
+            if (bonusRate + (float)bankstruct[index].GetQualityType() >= 1)
+                bonusRate = bonusRate + (float)bankstruct[index].GetQualityType();
+            else bonusRate = 1;
+        }
+
         if (BonusRateWithStats == false)
             return (int)((bonusRate / 100) * DaggerfallBankManager.BankAccounts[index].accountGold);
         else

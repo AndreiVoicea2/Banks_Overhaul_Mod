@@ -16,7 +16,6 @@ public class BankExpanded
     }
 
     #region Variables
-    public float bonusRate;
     public long BankDepositDate;
     public long RemainedDays;
     public bool BonusRewarded;
@@ -26,7 +25,6 @@ public class BankExpanded
     public BankExpanded()
     {
         SetQuality((QualityType)Random.Range(-2, 3));
-        SetbonusRate(BanksRemastered.BonusRate);
         SetBankDepositDate(0);
         SetRemainedDays(0);
         SetBonusRewarded(false);
@@ -34,12 +32,6 @@ public class BankExpanded
     }
 
     #region Getters and Setters
-    public float GetbonusRate()
-    {
-
-        return bonusRate;
-
-    }
 
     public long GetBankDepositDate()
     {
@@ -64,17 +56,6 @@ public class BankExpanded
     {
 
         return Quality;
-
-    }
-
-    public void SetbonusRate(float _bonusRate)
-    {
-
-       
-        if (_bonusRate + (float)Quality >= 1)
-            bonusRate = _bonusRate + (float)Quality;
-        else bonusRate = 1;
-
 
     }
 

@@ -16,10 +16,12 @@ public class BankExpanded
     }
 
     #region Variables
-    public long BankDepositDate;
-    public long RemainedDays;
-    public bool BonusRewarded;
-    public QualityType Quality;
+    private long BankDepositDate;
+    private long RemainedDays;
+    private bool BonusRewarded;
+    private QualityType Quality;
+
+
     #endregion
 
     public BankExpanded()
@@ -28,7 +30,7 @@ public class BankExpanded
         SetBankDepositDate(0);
         SetRemainedDays(0);
         SetBonusRewarded(false);
-       
+
     }
 
     #region Getters and Setters
@@ -59,6 +61,7 @@ public class BankExpanded
 
     }
 
+
     public void SetBankDepositDate(long _BankDepositDate)
     {
 
@@ -83,9 +86,10 @@ public class BankExpanded
     public void SetQuality(QualityType _Quality)
     {
 
-        Quality = _Quality;        
+        Quality = _Quality;
 
     }
+
 
     #endregion
 

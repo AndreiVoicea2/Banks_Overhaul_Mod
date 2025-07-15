@@ -13,7 +13,7 @@ using DaggerfallConnect;
 using static DaggerfallWorkshop.Game.PlayerEnterExit;
 using DaggerfallWorkshop.Game.UserInterfaceWindows;
 using static BankMessageHandler;
-using static UnityEngine.Rendering.PostProcessing.SubpixelMorphologicalAntialiasing;
+
 
 
 
@@ -28,9 +28,8 @@ using static UnityEngine.Rendering.PostProcessing.SubpixelMorphologicalAntialias
         public BankExpanded[] bankstruct = new BankExpanded[BanksRemastered.BankStructSize];
         public bool HasLoan;
         public bool LoadedFirstTime;
-
-        
-      
+        public long RegionEventsRemainedDays;
+        public long LastCheckoutDate;
     }
 
     #endregion
@@ -45,11 +44,13 @@ public class BanksRemastered : MonoBehaviour, IHasModSaveData
         private const long ConversionTime = DaggerfallDateTime.DaysPerYear * DaggerfallDateTime.MinutesPerDay;
         private const float MessageDelay = 6f;
 
+        private const long DaysForRegionFlagRefresh = 55500;
+
          #endregion
 
-        #region Variables
+    #region Variables
 
-        static readonly int[] loanVals = { 10000, 15000, 20000, 25000, 30000, 35000, 40000, 45000, 50000 };
+    static readonly int[] loanVals = { 10000, 15000, 20000, 25000, 30000, 35000, 40000, 45000, 50000 };
         static readonly float[] BonusRateOffsetVals = { 1f, 1.05f, 1.095f, 1.15f, 1.2f, 1.25f, 1.3f, 1.35f, 1.4f, 1.45f, 1.5f };
     
          public static bool AutomaticDeposit { get; set; }
@@ -57,16 +58,28 @@ public class BanksRemastered : MonoBehaviour, IHasModSaveData
         public static bool BonusRateWithStats { get; set; }
  
         public static bool BankQuality { get; set; }
+
+        public static bool RegionFactors { get; set; }
+
         private bool HasLoadedData = false;
         private bool HasLoan = false;
         private bool LoadedFirstTime = false;
         private bool LoadedEventsFirstTime = false;
 
+    
+
         public static int LoanAmount { get; set; }
         public static int DepositDaysNumber { get; set; }
         public static int BankStructSize = DaggerfallUnity.Instance.ContentReader.MapFileReader.RegionCount + 1;
+        
+        public static int PercentageLost { get; set;}
+
+        public static int SpoilsOfWar{ get; set; }
         private long DepositDaysDue;
+        private long RegionEventsRemainedDays;
         private int initialLoanAmount;
+
+        private long LastCheckoutDate = DaggerfallUnity.Instance.WorldTime.DaggerfallDateTime.ToClassicDaggerfallTime() + ConversionTime;
  
         public static float BonusRate { get; set; }
         public static float BonusRateOffset { get; set; }
@@ -76,8 +89,8 @@ public class BanksRemastered : MonoBehaviour, IHasModSaveData
     
         #endregion
 
-        #region Mod Initialization
-        static Mod mod;
+    #region Mod Initialization
+    static Mod mod;
 
         [Invoke(StateManager.StateTypes.Start, 0)]
         public static void Init(InitParams initParams)
@@ -107,6 +120,9 @@ public class BanksRemastered : MonoBehaviour, IHasModSaveData
                 BonusRate = mod.GetSettings().GetValue<float>("GeneralSettings", "BonusRate");
                 DepositDaysNumber = mod.GetSettings().GetValue<int>("GeneralSettings", "DepositDays");
                 BankQuality = mod.GetSettings().GetValue<bool>("GeneralSettings", "AllowBankQuality");
+                RegionFactors = mod.GetSettings().GetValue<bool>("GeneralSettings", "AllowRegionFactors");
+                PercentageLost = mod.GetSettings().GetValue<int>("GeneralSettings", "GoldPercentageLost");
+                SpoilsOfWar = mod.GetSettings().GetValue<int>("GeneralSettings", "SpolsOfWarPercentage");
                 DepositDaysDue = DaggerfallDateTime.MinutesPerDay * DepositDaysNumber;
                 initialLoanAmount = LoanAmount;
 
@@ -176,6 +192,7 @@ public class BanksRemastered : MonoBehaviour, IHasModSaveData
                     }
                 }
 
+
                 LoadedEventsFirstTime = true;
             }
 
@@ -187,7 +204,7 @@ public class BanksRemastered : MonoBehaviour, IHasModSaveData
 
             
         }
-        catch (Exception ex)
+        catch
         {
            
             Debug.LogError(GeneralMessageHandler(MessageState.FAILED_LOAD_SETTINGS));
@@ -210,7 +227,6 @@ public class BanksRemastered : MonoBehaviour, IHasModSaveData
         {
               mod.LoadSettingsCallback = LoadSettings;
               mod.LoadSettings();
-            
              
 
              DaggerfallWorkshop.Game.Serialization.SaveLoadManager.OnStartLoad += (SaveData_v1 saveData) =>
@@ -223,40 +239,41 @@ public class BanksRemastered : MonoBehaviour, IHasModSaveData
         private void Update()
         {
         
-
              if (HasLoadedData == true)
-             {
+        {
+            if(RegionFactors == true)
+            WriteRegionFlags();
 
-                if (LoadedFirstTime == false)
-                {
-      
-                    for (int i = 0; i < BankStructSize; i++)             
-                        bankstruct[i] = new BankExpanded();
-                         LoadedFirstTime = true;
+            if (LoadedFirstTime == false)
+            {
 
-                }
-             if (AutomaticDeposit == true)
-                 {
+                for (int i = 0; i < BankStructSize; i++)
+                    bankstruct[i] = new BankExpanded();
+                LoadedFirstTime = true;
 
-                     AUTORewardBonusDeposit();
+            }
+            if (AutomaticDeposit == true)
+            {
 
-                 }
-                 else
-                 {
+                AUTORewardBonusDeposit();
 
-                     RewardBonusDeposit();
+            }
+            else
+            {
 
-                 }
+                RewardBonusDeposit();
 
-                  if (RestrictLoanOption == true)
-                  {
-                      if (HasLoan == true)
-                          LoanAmount = 0;
-                      else LoanAmount = initialLoanAmount;
+            }
 
-                  }
+            if (RestrictLoanOption == true)
+            {
+                if (HasLoan == true)
+                    LoanAmount = 0;
+                else LoanAmount = initialLoanAmount;
 
-             }
+            }
+
+        }
 
         }
 
@@ -314,6 +331,7 @@ public class BanksRemastered : MonoBehaviour, IHasModSaveData
                  
                 bankstruct[index].SetBankDepositDate(date);
                 bankstruct[index].SetBonusRewarded(false);
+     
 
                 
                DaggerfallUI.AddHUDText(GeneralMessageHandler(DepositDaysNumber == 1 ? MessageState.DEPOSIT_ONE_DAY : MessageState.DEPOSIT  , DepositDaysNumber), MessageDelay);
@@ -359,7 +377,7 @@ public class BanksRemastered : MonoBehaviour, IHasModSaveData
                 {
                     long date = DaggerfallUnity.Instance.WorldTime.DaggerfallDateTime.ToClassicDaggerfallTime() + ConversionTime;
                     bankstruct[index].SetBankDepositDate(date);
-                     DaggerfallUI.AddHUDText(GeneralMessageHandler(DepositDaysNumber == 1 ? MessageState.DEPOSIT_ONE_DAY : MessageState.DEPOSIT, DepositDaysNumber), MessageDelay);
+                    DaggerfallUI.AddHUDText(GeneralMessageHandler(DepositDaysNumber == 1 ? MessageState.DEPOSIT_ONE_DAY : MessageState.DEPOSIT, DepositDaysNumber), MessageDelay);
 
 
                   }
@@ -405,6 +423,8 @@ public class BanksRemastered : MonoBehaviour, IHasModSaveData
     private int CalculateBonusRate(int index)
     {
         float bonusRate = BonusRate;
+
+
         if (BankQuality == true)
         {
             if (bonusRate + (float)bankstruct[index].GetQualityType() >= 1)
@@ -424,14 +444,74 @@ public class BanksRemastered : MonoBehaviour, IHasModSaveData
 
     #endregion
 
+
+    private void WriteRegionFlags()
+    {
+
+        long CurrentDate = DaggerfallUnity.Instance.WorldTime.DaggerfallDateTime.ToClassicDaggerfallTime() + ConversionTime;
+        long DaysPassed = CurrentDate - LastCheckoutDate + RegionEventsRemainedDays;
+        
+        if (DaysPassed >= DaysForRegionFlagRefresh)
+        {
+
+            for (byte i = 0; i < BankStructSize; i++)
+            {
+
+                if (bankstruct[i].GetBankDepositDate() > 0)
+                {
+
+                    bool[] record_flags = GameManager.Instance.PlayerEntity.RegionData[i].Flags;
+                    int bankgold = DaggerfallBankManager.BankAccounts[i].accountGold;
+                    string RegionName = DaggerfallUnity.Instance.ContentReader.MapFileReader.GetRegionName(i);
+
+                    if (record_flags[3] || record_flags[5] || record_flags[8] || record_flags[11])
+                    {
+
+                        if (bankgold > 0)
+                        {
+                            int goldlost = bankgold * PercentageLost / 100;
+
+                            DaggerfallBankManager.BankAccounts[i].accountGold -= goldlost;
+                            DaggerfallUI.AddHUDText("Disastrous Events in region " + RegionName + ", you lost " + goldlost.ToString() + " gold", 6f);
+
+                        }
+
+                    }
+
+                    if (record_flags[2])
+                    {
+
+                        if (bankgold > 0)
+                        {
+                            int goldwon = bankgold * SpoilsOfWar / 100;
+                            DaggerfallBankManager.BankAccounts[i].accountGold += goldwon;
+                            DaggerfallUI.AddHUDText("War won in region " + RegionName + " you got " + goldwon.ToString() + " gold", 6f);
+                        }
+                    }
+
+
+                }
+
+            }
+
+
+            RegionEventsRemainedDays = DaysPassed % DaysForRegionFlagRefresh;
+            LastCheckoutDate = CurrentDate;
+
+
+        }
+
+
+    }
+
        
         #region SaveMethods
 
-    
-        public Type SaveDataType
-        {
-            get { return typeof(BanksRemasteredSaveData); }
-        }
+
+    public Type SaveDataType
+    {
+        get { return typeof(BanksRemasteredSaveData); }
+    }
 
     public object NewSaveData()
     {
@@ -439,7 +519,9 @@ public class BanksRemastered : MonoBehaviour, IHasModSaveData
         {
             bankstruct = new BankExpanded[BankStructSize],
             HasLoan = false,
-            LoadedFirstTime = false
+            LoadedFirstTime = false,
+            RegionEventsRemainedDays = 0,
+            LastCheckoutDate = 0
             
         };
 
@@ -463,10 +545,12 @@ public class BanksRemastered : MonoBehaviour, IHasModSaveData
 
             saveData.HasLoan = HasLoan;
             saveData.LoadedFirstTime = LoadedFirstTime;
+            saveData.RegionEventsRemainedDays = RegionEventsRemainedDays;
+            saveData.LastCheckoutDate = LastCheckoutDate;
 
             return saveData;
         }
-        catch (Exception ex)
+        catch
         {
             Debug.LogError(MessageState.GET_SAVE_ERROR);
             return null;
@@ -490,8 +574,10 @@ public class BanksRemastered : MonoBehaviour, IHasModSaveData
             HasLoan = bankSaveData.HasLoan;
             LoadedFirstTime = bankSaveData.LoadedFirstTime;
             HasLoadedData = true;
+            RegionEventsRemainedDays = bankSaveData.RegionEventsRemainedDays;
+            LastCheckoutDate = bankSaveData.LastCheckoutDate;
         }
-        catch (Exception ex)
+        catch
         {
             Debug.LogError(GeneralMessageHandler(MessageState.LOAD_SAVE_ERROR));
         }

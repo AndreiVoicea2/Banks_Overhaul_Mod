@@ -48,9 +48,9 @@
                 {
                     "Min": 1,
                     "Max": 10,
-                    "Value": 5,
+                    "Value": 3,
                     "Name": "BonusRate",
-                    "Description": "Set the bonus rate || Default = 5%",
+                    "Description": "Set the bonus rate || Default = 3%",
                     "$version": "v1",
                     "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
                 },
@@ -60,6 +60,31 @@
                     "Value": 30,
                     "Name": "DepositDays",
                     "Description": "Set the deposit days || Default = 30",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderIntKey"
+                },
+                {
+                    "Value": true,
+                    "Name": "AllowRegionFactors",
+                    "Description": "Allow region events(plague,famine,etc) to affect banks(changing bonus rates or losing gold)",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+                },
+                {
+                    "Min": 1,
+                    "Max": 15,
+                    "Value": 1,
+                    "Name": "GoldPercentageLost",
+                    "Description": "Set the percentage you lose when a disaster happens",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderIntKey"
+                },
+                {
+                    "Min": 1,
+                    "Max": 15,
+                    "Value": 5,
+                    "Name": "SpolsOfWarPercentage",
+                    "Description": "Set the percentage you get if the region wins the war",
                     "$version": "v1",
                     "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderIntKey"
                 }

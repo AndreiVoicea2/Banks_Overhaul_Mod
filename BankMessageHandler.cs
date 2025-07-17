@@ -1,6 +1,12 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+////////////////////////////////////////////////////////////////////
+//Project Purpose: Enhancing the Daggerfall Unity Bank System     //
+////////////////////////////////////////////////////////////////////
+//Class Purpose: Define System Messages                           //
+////////////////////////////////////////////////////////////////////
+//Made by: Andrei Voicea                                          //
+////////////////////////////////////////////////////////////////////
+
+
 using static BankExpanded;
 
 public class BankMessageHandler
@@ -20,7 +26,7 @@ public class BankMessageHandler
                 return "The bank has a cold atmosphere, with old but still sturdy furniture. The clerks work without haste, double-checking documents before approving transactions. A young, somewhat inattentive guard scans the room but seems more concerned about his night shift than security.";
 
 
-            break;
+                break;
 
             case QualityType.AVERAGE:
 
@@ -49,6 +55,36 @@ public class BankMessageHandler
 
     }
 
+    public static string RegionEventsMessageBad(string RegionName, byte flags, int goldlost)
+    {
+
+        string buffer = RegionName + " is ravaged by";
+
+
+        if ((flags & 1) != 0)
+            buffer += " Lost War ";
+
+        if (((flags >> 1) & 1) != 0)
+            buffer += " Plague ";
+
+        if (((flags >> 2) & 1) != 0)
+            buffer += " Famine ";
+
+        if (((flags >> 3) & 1) != 0)
+            buffer += " Crime Waves ";
+
+        buffer += ", you lost " + goldlost.ToString() + " gold";
+
+        return buffer;
+
+    }
+
+    public static string RegionEventsMessageGood(string RegionName, int goldwon)
+    {
+
+        return "Wor won in " + RegionName + ", you got " + goldwon.ToString() + " gold";
+
+    }
 
     public enum MessageState
     {
@@ -61,7 +97,7 @@ public class BankMessageHandler
         GET_SAVE_ERROR = 6,
         LOAD_SAVE_ERROR = 7
     }
-    public static string GeneralMessageHandler(MessageState MessageCode, int MessageNumber = 0)
+    public static string GeneralMessageHandler(MessageState MessageCode, int MessageNumber = 0, int MessageNumber2 = 0)
     {
         switch (MessageCode)
         {
@@ -74,7 +110,7 @@ public class BankMessageHandler
                 break;
 
             case MessageState.REWARD:
-                return "Your Deposit Generated " + MessageNumber.ToString() + " Gold";
+                return "Your Deposit Generated " + MessageNumber.ToString() + " Gold with " + MessageNumber2.ToString() + "% rate";
                 break;
 
             case MessageState.FAILED_DEPOSIT:

@@ -2,55 +2,15 @@
     "Version": "1.00",
     "Sections": [
         {
-            "Name": "GeneralSettings",
-            "Description": "Related To General Settings For The Mod",
+            "Name": "DepositSettings",
             "IsAdvanced": false,
             "Keys": [
                 {
-                    "Value": true,
-                    "Name": "AllowAutomaticDepositing",
-                    "Description": "Timer will be reseted automatically and the deposit bonus will be added without another deposit || Default = True",
-                    "$version": "v1",
-                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
-                },
-                {
-                    "Value": true,
-                    "Name": "AllowBankQuality",
-                    "Description": "Allows banks to have different quality indices || Default = True",
-                    "$version": "v1",
-                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
-                },
-                {
-                    "Value": true,
-                    "Name": "AllowLoanRestriction",
-                    "Description": "Restrict the number of loans taken in all the game to one until repayed || Default = True",
-                    "$version": "v1",
-                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
-                },
-                {
-                    "Options": [
-                        "10000",
-                        "15000",
-                        "20000",
-                        "25000",
-                        "30000",
-                        "35000",
-                        "40000",
-                        "45000",
-                        "50000"
-                    ],
-                    "Value": 0,
-                    "Name": "LoanMaxPerLevel",
-                    "Description": "(Working only with Loan Restriction) Set the loan max pay per level (formula: LoanMaxPerLevel * PlayerLevel) || Default = 10000",
-                    "$version": "v1",
-                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.MultipleChoiceKey"
-                },
-                {
                     "Min": 1,
                     "Max": 10,
-                    "Value": 5,
+                    "Value": 3,
                     "Name": "BonusRate",
-                    "Description": "Set the bonus rate || Default = 5%",
+                    "Description": "The interest percentage",
                     "$version": "v1",
                     "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
                 },
@@ -59,24 +19,28 @@
                     "Max": 30,
                     "Value": 30,
                     "Name": "DepositDays",
-                    "Description": "Set the deposit days || Default = 30",
+                    "Description": "Number of days until payout",
                     "$version": "v1",
                     "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderIntKey"
-                }
-
-
-            ],
-            "$version": "v1"
-        },
-        {
-            "Name": "MiscSettings",
-            "Description": "Related To Misc Settings And Options",
-            "IsAdvanced": false,
-            "Keys": [
+                },
+                {
+                    "Value": true,
+                    "Name": "AllowAutomaticDepositing",
+                    "Description": "Redeposit after each payout",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+                },
+                {
+                    "Value": true,
+                    "Name": "AllowBankQuality",
+                    "Description": "Allows banks to have different qualities (affects bonus rate)",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+                },
                 {
                     "Value": false,
-                    "Name": "AllowStatsToCalculateBonusRate",
-                    "Description": "Allows the Bonus Rate to be modified by stats: BonusRate x (BonusRateOffset + (Personality x Luck x Merchantile)/100^3))",
+                    "Name": "AllowStatsForBonus",
+                    "Description": "Allows the Bonus Rate to be modified by stats",
                     "$version": "v1",
                     "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
                 },
@@ -96,13 +60,76 @@
                     ],
                     "Value": 2,
                     "Name": "BonusRateOffset",
-                    "Description": "Set the BonusRateOffset || Default = 1.095",
+                    "Description": "Set how much the stats affects the payout",
                     "$version": "v1",
                     "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.MultipleChoiceKey"
                 }
             ],
             "$version": "v1"
-        }    
-        
+        },
+        {
+            "Name": "LoanSettings",
+            "IsAdvanced": false,
+            "Keys": [
+                {
+                    "Value": true,
+                    "Name": "AllowLoanRestriction",
+                    "Description": "Restrict to one loan in all the regions",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+                },
+                {
+                    "Options": [
+                        "10000",
+                        "15000",
+                        "20000",
+                        "25000",
+                        "30000",
+                        "35000",
+                        "40000",
+                        "45000",
+                        "50000"
+                    ],
+                    "Value": 0,
+                    "Name": "LoanMaxPerLevel",
+                    "Description": "Set the loan max gold per level",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.MultipleChoiceKey"
+                }
+            ],
+            "$version": "v1"
+        },
+        {
+            "Name": "RegionEventsSettings",
+            "IsAdvanced": false,
+            "Keys": [
+                {
+                    "Value": true,
+                    "Name": "AllowRegionFactors",
+                    "Description": "Allow region events(plague,famine,etc) to affect your gold",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+                },
+                {
+                    "Min": 1,
+                    "Max": 15,
+                    "Value": 1,
+                    "Name": "GoldPercentageLost",
+                    "Description": "Set the percentage you lose when a disaster happens",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderIntKey"
+                },
+                {
+                    "Min": 1,
+                    "Max": 15,
+                    "Value": 5,
+                    "Name": "SpolsOfWarPercentage",
+                    "Description": "Set the percentage you get if the region wins the war",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderIntKey"
+                }
+            ],
+            "$version": "v1"
+        }
     ]
 }

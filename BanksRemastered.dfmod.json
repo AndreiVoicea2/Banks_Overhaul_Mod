@@ -1,16 +1,16 @@
 {
     "ModTitle": "Banks Overhaul",
-    "ModVersion": "1.5.1",
+    "ModVersion": "1.6.0",
     "ModAuthor": "Voicea Andrei",
-    "ContactInfo": "https://next.nexusmods.com/profile/Voxxia",
+    "ContactInfo": "https://next.nexusmods.com/profile/AndreiVoicea",
     "DFUnity_Version": "1.1.0",
-    "ModDescription": "This mod change  the bank functionality.",
+    "ModDescription": "This mod changes the functionality of the bank.",
     "GUID": "cb3ca502-1934-4f4e-96d0-f4d9057c05cc",
     "Files": [
-        "Assets/Game/Mods/BanksRemaked/modsettings.json",
-        "Assets/Game/Mods/BanksRemaked/BanksRemastered.cs",
-        "Assets/Game/Mods/BanksRemaked/BankExpanded.cs",
-        "Assets/Game/Mods/BanksRemaked/BankMessageHandler.cs"
+        "Assets/Game/Mods/Banks_Overhaul_Mod/BankMessageHandler.cs",
+        "Assets/Game/Mods/Banks_Overhaul_Mod/modsettings.json",
+        "Assets/Game/Mods/Banks_Overhaul_Mod/BanksRemastered.cs",
+        "Assets/Game/Mods/Banks_Overhaul_Mod/BankExpanded.cs"
     ],
     "Dependencies": [
         {

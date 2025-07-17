@@ -217,7 +217,7 @@ public class BanksRemastered : MonoBehaviour, IHasModSaveData
 
                 RegionFactors = mod.GetSettings().GetValue<bool>("RegionEventsSettings", "AllowRegionFactors");
                 PercentageLost = mod.GetSettings().GetValue<int>("RegionEventsSettings", "GoldPercentageLost");
-                SpoilsOfWar = mod.GetSettings().GetValue<int>("RegionEventsSettings", "SpolsOfWarPercentage");
+                SpoilsOfWar = mod.GetSettings().GetValue<int>("RegionEventsSettings", "SpoilsOfWarPercentage");
 
             }
 
@@ -503,7 +503,7 @@ public class BanksRemastered : MonoBehaviour, IHasModSaveData
                     {
                         bool[] record_flags = playerentity.RegionData[i].Flags;
                         string RegionName = DaggerfallUnity.Instance.ContentReader.MapFileReader.GetRegionName(i);
-
+                        
                         if (record_flags[3] || record_flags[5] || record_flags[8] || record_flags[11])
                         {
                             byte flagsPacked = (byte)(

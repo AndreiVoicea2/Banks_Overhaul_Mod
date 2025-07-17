@@ -123,7 +123,7 @@
                     "Min": 1,
                     "Max": 15,
                     "Value": 5,
-                    "Name": "SpolsOfWarPercentage",
+                    "Name": "SpoilsOfWarPercentage",
                     "Description": "Set the percentage you get if the region wins the war",
                     "$version": "v1",
                     "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderIntKey"

@@ -82,7 +82,7 @@ public class BankMessageHandler
     public static string RegionEventsMessageGood(string RegionName, int goldwon)
     {
 
-        return "Wor won in " + RegionName + ", you got " + goldwon.ToString() + " gold";
+        return "War won in " + RegionName + ", you got " + goldwon.ToString() + " gold";
 
     }
 
